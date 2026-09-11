@@ -1,0 +1,30 @@
+@if (toastService.toasts().length) {
+  <div class="toast-stack" role="status" aria-live="polite">
+    @for (toast of toastService.toasts(); track toast.id) {
+      <div
+        class="toast"
+        [class.error]="toast.tipo === 'error'"
+        [class.success]="toast.tipo === 'success'"
+      >
+        <span>{{ toast.mensaje }}</span>
+        <button
+          type="button"
+          (click)="toastService.dismiss(toast.id)"
+          aria-label="Cerrar aviso"
+          style="
+            margin-left: 12px;
+            float: right;
+            background: none;
+            border: 0;
+            color: inherit;
+            opacity: 0.6;
+            font-size: 15px;
+            line-height: 1;
+          "
+        >
+          ×
+        </button>
+      </div>
+    }
+  </div>
+}

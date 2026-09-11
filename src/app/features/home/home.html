@@ -1,0 +1,59 @@
+<div class="welcome-banner">
+  <div>
+    <h1>{{ saludo() }}, {{ authService.currentUser()?.nombre }}</h1>
+    <div class="puesto">Presidencia</div>
+  </div>
+  <div class="reloj">
+    <div class="hora">{{ hora() }}</div>
+    <div class="fecha">{{ fecha() }}</div>
+  </div>
+</div>
+
+<div class="pagehead" style="margin-bottom: 14px">
+  <div class="eyebrow">Menú principal</div>
+  <h1 style="font-size: 22px">Accesos rápidos</h1>
+</div>
+
+<div class="modulos-grid">
+  @for (modulo of modulos; track modulo.nombre) {
+    @if (modulo.proximamente) {
+      <div class="modulo-card proximamente">
+        <div class="modulo-icono" [class]="modulo.color">
+          @if (modulo.icono === 'presupuesto') {
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3v18M17 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          }
+        </div>
+        <h3>{{ modulo.nombre }}</h3>
+        <p>{{ modulo.descripcion }}</p>
+      </div>
+    } @else {
+      <a class="modulo-card" [routerLink]="modulo.ruta">
+        <div class="modulo-icono" [class]="modulo.color">
+          @if (modulo.icono === 'sesiones') {
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect
+                x="3"
+                y="5"
+                width="18"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="2"
+              />
+              <path d="M10 9.5v5l4.5-2.5-4.5-2.5Z" fill="currentColor" />
+            </svg>
+          }
+        </div>
+        <h3>{{ modulo.nombre }}</h3>
+        <p>{{ modulo.descripcion }}</p>
+      </a>
+    }
+  }
+</div>

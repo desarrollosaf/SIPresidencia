@@ -1,0 +1,44 @@
+<div class="pagehead">
+  <div class="eyebrow">Pleno · Registro parlamentario</div>
+  <h1>Sesión</h1>
+  <p>
+    Últimos eventos de sesión. Entra a uno para ver el orden del día, el video de cada punto y los
+    votos.
+  </p>
+</div>
+
+<div
+  class="card card-p"
+  style="margin-bottom: 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap"
+>
+  <div class="field" style="margin-bottom: 0">
+    <label for="fecha">Buscar por fecha</label>
+    <input id="fecha" type="date" class="input" [(ngModel)]="fecha" name="fecha" />
+  </div>
+  <button type="button" class="btn" [disabled]="!fecha" (click)="buscarPorFecha()">Buscar</button>
+  <button type="button" class="btn line" (click)="cargarUltimos()">Ver últimos eventos</button>
+</div>
+
+@if (cargando()) {
+  <p class="empty">Cargando…</p>
+} @else if (eventos().length === 0) {
+  <p class="empty">No hay eventos para mostrar.</p>
+} @else {
+  <div class="sesiones-lista">
+    @for (evento of eventos(); track evento.id) {
+      <a [routerLink]="[evento.id]" class="sesion-fila">
+        <div class="fecha-badge">
+          <div class="dia tnum">{{ dia(evento.fecha) }}</div>
+          <div class="mes">{{ mesCorto(evento.fecha) }}</div>
+        </div>
+        <div class="info">
+          <h3>{{ evento.descripcion || 'Sin descripción' }}</h3>
+          @if (evento.tipoevento) {
+            <span class="pill gray">{{ evento.tipoevento }}</span>
+          }
+        </div>
+        <span class="ir">Ver orden del día →</span>
+      </a>
+    }
+  </div>
+}
