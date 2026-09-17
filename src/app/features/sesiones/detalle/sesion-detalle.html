@@ -43,7 +43,14 @@
     <div class="puntos-lista">
       @for (punto of puntosFiltrados(ev.puntos); track punto.id) {
         <div class="punto-row" [class.abierto]="esAbierto(punto)">
-          <button type="button" class="punto-row-header" (click)="alternarMedia(punto)">
+          <div
+            class="punto-row-header"
+            role="button"
+            tabindex="0"
+            (click)="alternarMedia(punto)"
+            (keydown.enter)="alternarMedia(punto)"
+            (keydown.space)="alternarMedia(punto); $event.preventDefault()"
+          >
             <div class="punto-num">{{ punto.nopunto ?? '—' }}</div>
             <div class="punto-row-info">
               <h4>{{ punto.punto }}</h4>
@@ -71,7 +78,7 @@
                 stroke-linejoin="round"
               />
             </svg>
-          </button>
+          </div>
 
           @if (esAbierto(punto)) {
             <div class="punto-row-body">
@@ -133,18 +140,6 @@
                           {{ formatoDuracion(duracion) }}
                         </div>
                       }
-                      <a class="btn sm line punto-panel-descarga" [href]="punto.video_url" download>
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M12 4v11m0 0l-4-4m4 4l4-4M5 19.5h14"
-                            stroke="currentColor"
-                            stroke-width="1.7"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          />
-                        </svg>
-                        Descargar video
-                      </a>
                     </div>
                   </div>
                 } @else {

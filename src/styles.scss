@@ -778,6 +778,7 @@ button {
   gap: 14px;
   padding: 13px 18px;
   text-align: left;
+  cursor: pointer;
 }
 .punto-row-header:hover {
   background: var(--surface-2);
@@ -800,6 +801,7 @@ button {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 5px;
 }
 .punto-row-info h4 {
@@ -889,10 +891,6 @@ button {
   width: 14px;
   height: 14px;
   color: var(--muted);
-}
-.punto-panel-descarga {
-  margin-top: 4px;
-  justify-content: center;
 }
 @media (max-width: 720px) {
   .punto-media {
