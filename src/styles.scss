@@ -706,54 +706,207 @@ button {
   color: var(--primary);
 }
 
-/* ---------- Puntos del orden del día ---------- */
+/* ---------- Orden del día: cabecera y filtros ---------- */
+.orden-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.orden-head h3 {
+  font-size: 16px;
+}
+.orden-head .sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+}
+.segmented button {
+  background: none;
+  border: 0;
+  padding: 7px 13px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.segmented button:hover {
+  color: var(--ink);
+}
+.segmented button.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Puntos del orden del día (acordeón) ---------- */
 .puntos-lista {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
-.punto-card {
+.punto-row {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 20px 22px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
 }
-.punto-cabecera {
+.punto-row.abierto {
+  box-shadow: var(--shadow);
+  border-color: var(--primary-soft);
+}
+.punto-row-header {
+  width: 100%;
+  background: none;
+  border: 0;
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  text-align: left;
+}
+.punto-row-header:hover {
+  background: var(--surface-2);
+}
+.punto-num {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--brass-soft);
+  color: #7c5a17;
+  display: grid;
+  place-items: center;
+  font-family: 'Spectral', serif;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.punto-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.punto-row-info h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pill.video-on {
+  background: #e5f5ee;
+  color: var(--favor);
+}
+.pill.video-on .dot {
+  background: var(--favor);
+  width: 6px;
+  height: 6px;
+}
+.pill.video-off {
+  background: var(--line-2);
+  color: var(--muted);
+}
+.pill.video-off .dot {
+  background: var(--muted);
+  width: 6px;
+  height: 6px;
+}
+.punto-row-actions {
+  flex: none;
+  display: flex;
+  gap: 8px;
+}
+.chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.punto-row.abierto .chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+.punto-row-body {
+  border-top: 1px solid var(--line-2);
+  padding: 18px;
 }
 .punto-texto {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 14px;
   color: var(--ink);
   line-height: 1.55;
 }
 .punto-texto.justificado {
-  margin-bottom: 0;
   text-align: justify;
   text-justify: inter-word;
 }
 .punto-media {
   display: grid;
-  grid-template-columns: 1fr minmax(0, 360px);
-  gap: 22px;
+  grid-template-columns: 1fr minmax(0, 280px);
+  gap: 20px;
   align-items: start;
-}
-.punto-media .punto-texto {
-  margin-bottom: 0;
-  text-align: justify;
-  text-justify: inter-word;
 }
 .punto-media .player {
   width: 100%;
 }
+.punto-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.punto-panel-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.punto-panel-fila svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+.punto-panel-descarga {
+  margin-top: 4px;
+  justify-content: center;
+}
 @media (max-width: 720px) {
   .punto-media {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .punto-row-header {
+    flex-wrap: wrap;
+  }
+  .punto-row-actions {
+    order: 3;
+    width: 100%;
+    padding-left: 46px;
   }
 }
 
@@ -762,6 +915,11 @@ button {
   border-top: 1px solid var(--line-2);
   margin-top: 16px;
   padding-top: 16px;
+}
+.punto-row-body > .votos-panel:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 .votos-resultado {
   display: grid;

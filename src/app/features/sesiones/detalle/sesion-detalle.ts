@@ -9,6 +9,8 @@ import {
 } from '../../../core/services/sesiones.service';
 import { ToastService } from '../../../core/services/toast.service';
 
+type FiltroPuntos = 'todos' | 'video' | 'sin-video';
+
 @Component({
   selector: 'app-sesion-detalle',
   imports: [DatePipe, RouterLink],
@@ -17,10 +19,14 @@ import { ToastService } from '../../../core/services/toast.service';
 export class SesionDetalle implements OnInit {
   protected readonly evento = signal<EventoDetalle | null>(null);
   protected readonly cargando = signal(true);
+  protected readonly filtro = signal<FiltroPuntos>('todos');
+
   protected readonly puntoAbierto = signal<number | null>(null);
+  protected readonly votosAbierto = signal<number | null>(null);
   protected readonly votosPorPunto = signal<Record<number, VotosPunto>>({});
   protected readonly cargandoVotos = signal<number | null>(null);
   protected readonly detalleVotosAbierto = signal<number | null>(null);
+  protected readonly duracionPorPunto = signal<Record<number, number>>({});
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -43,12 +49,39 @@ export class SesionDetalle implements OnInit {
     });
   }
 
-  protected verVotos(punto: Punto): void {
-    if (this.puntoAbierto() === punto.id) {
-      this.puntoAbierto.set(null);
+  protected puntosFiltrados(puntos: Punto[]): Punto[] {
+    switch (this.filtro()) {
+      case 'video':
+        return puntos.filter((p) => !!p.video_url);
+      case 'sin-video':
+        return puntos.filter((p) => !p.video_url);
+      default:
+        return puntos;
+    }
+  }
+
+  protected contarConVideo(puntos: Punto[]): number {
+    return puntos.filter((p) => !!p.video_url).length;
+  }
+
+  protected contarSinVideo(puntos: Punto[]): number {
+    return puntos.length - this.contarConVideo(puntos);
+  }
+
+  protected esAbierto(punto: Punto): boolean {
+    return this.puntoAbierto() === punto.id || this.votosAbierto() === punto.id;
+  }
+
+  protected alternarMedia(punto: Punto): void {
+    this.puntoAbierto.set(this.puntoAbierto() === punto.id ? null : punto.id);
+  }
+
+  protected alternarVotos(punto: Punto): void {
+    if (this.votosAbierto() === punto.id) {
+      this.votosAbierto.set(null);
       return;
     }
-    this.puntoAbierto.set(punto.id);
+    this.votosAbierto.set(punto.id);
     if (this.votosPorPunto()[punto.id]) return;
 
     this.cargandoVotos.set(punto.id);
@@ -62,6 +95,19 @@ export class SesionDetalle implements OnInit {
         this.toastService.error('No se pudieron cargar los votos de este punto.');
       },
     });
+  }
+
+  protected onDuracion(punto: Punto, evento: Event): void {
+    const video = evento.target as HTMLVideoElement;
+    if (!isFinite(video.duration)) return;
+    this.duracionPorPunto.update((mapa) => ({ ...mapa, [punto.id]: video.duration }));
+  }
+
+  protected formatoDuracion(segundos: number): string {
+    const total = Math.round(segundos);
+    const min = Math.floor(total / 60);
+    const seg = total % 60;
+    return `${min}:${seg.toString().padStart(2, '0')} min`;
   }
 
   // Mismo criterio 0-3 que usa el resto de SIRegistroParlamentario para
