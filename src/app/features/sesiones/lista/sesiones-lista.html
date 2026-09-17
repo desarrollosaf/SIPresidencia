@@ -7,16 +7,35 @@
   </p>
 </div>
 
-<div
-  class="card card-p"
-  style="margin-bottom: 18px; display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap"
->
-  <div class="field" style="margin-bottom: 0">
+<div class="buscador">
+  <div class="buscador-campo">
     <label for="fecha">Buscar por fecha</label>
-    <input id="fecha" type="date" class="input" [(ngModel)]="fecha" name="fecha" />
+    <div class="input-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+        <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.7" />
+        <path d="M8 3v3.2M16 3v3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+      <input
+        id="fecha"
+        type="date"
+        class="input"
+        [(ngModel)]="fecha"
+        name="fecha"
+        (keyup.enter)="buscarPorFecha()"
+      />
+    </div>
   </div>
-  <button type="button" class="btn" [disabled]="!fecha" (click)="buscarPorFecha()">Buscar</button>
-  <button type="button" class="btn line" (click)="cargarUltimos()">Ver últimos eventos</button>
+  <div class="buscador-acciones">
+    <button type="button" class="btn" [disabled]="!fecha" (click)="buscarPorFecha()">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.9" />
+        <path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+      </svg>
+      Buscar
+    </button>
+    <button type="button" class="btn line" (click)="cargarUltimos()">Ver últimos eventos</button>
+  </div>
 </div>
 
 @if (cargando()) {
