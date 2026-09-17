@@ -60,7 +60,12 @@
               </span>
             </div>
             <div class="punto-row-actions" (click)="$event.stopPropagation()">
-              <button type="button" class="btn sm line" (click)="alternarVotos(punto)">
+              <button
+                type="button"
+                class="btn sm line"
+                [class.activo]="votosAbierto() === punto.id"
+                (click)="alternarVotos(punto)"
+              >
                 {{ votosAbierto() === punto.id ? 'Ocultar votos' : 'Ver votos' }}
               </button>
               @if (punto.video_url) {
