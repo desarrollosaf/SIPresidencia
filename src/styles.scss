@@ -377,6 +377,22 @@ button {
   margin: 6px 0 0;
   max-width: 60ch;
 }
+.pagehead-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fecha-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.fecha-linea svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+}
 
 /* ---------- Cards & grid ---------- */
 .grid {
@@ -459,11 +475,6 @@ button {
 .btn.line:hover:not(:disabled) {
   background: var(--primary-soft);
   border-color: var(--primary-soft);
-}
-.btn.line.activo {
-  background: var(--primary-soft);
-  border-color: var(--primary-soft);
-  color: var(--primary-700);
 }
 .btn.danger {
   background: var(--contra);
@@ -961,6 +972,34 @@ button {
   box-shadow: var(--shadow-sm);
 }
 
+.filtro-pills {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filtro-pill {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.filtro-pill:hover {
+  border-color: var(--primary-soft);
+}
+.filtro-pill.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
 /* ---------- Puntos del orden del día (acordeón) ---------- */
 .puntos-lista {
   display: flex;
@@ -1142,15 +1181,32 @@ button {
   }
 }
 .vbox {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  padding: 14px 6px;
+  padding: 12px 14px;
   background: var(--surface-2);
+}
+.vbox-icono {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--muted);
+}
+.vbox-icono svg {
+  width: 17px;
+  height: 17px;
 }
 .vbox .n {
   font-family: 'Spectral', serif;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1;
 }
@@ -1159,7 +1215,7 @@ button {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-top: 5px;
+  margin-top: 3px;
   color: var(--muted);
 }
 .vbox.favor {
@@ -1169,6 +1225,10 @@ button {
 .vbox.favor .n {
   color: var(--favor);
 }
+.vbox.favor .vbox-icono {
+  background: #dff2ea;
+  color: var(--favor);
+}
 .vbox.contra {
   border-color: #eccac6;
   background: #fdf5f4;
@@ -1176,8 +1236,85 @@ button {
 .vbox.contra .n {
   color: var(--contra);
 }
+.vbox.contra .vbox-icono {
+  background: #fbe4e1;
+  color: var(--contra);
+}
 .vbox.abst .n {
   color: var(--abst);
+}
+.vbox.abst .vbox-icono {
+  background: #e7ebe9;
+  color: var(--abst);
+}
+
+/* ---------- Detalle de votos por diputado ---------- */
+.link-toggle {
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-decoration: underline;
+}
+.link-toggle:hover {
+  color: var(--primary);
+}
+.votos-detalle-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.votos-detalle-head .input-icon {
+  width: 220px;
+}
+.votos-lista {
+  margin-top: 8px;
+  border-top: 1px solid var(--line-2);
+}
+.votos-lista-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.votos-lista-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 4px;
+  border-top: 1px solid var(--line-2);
+  font-size: 13px;
+  color: var(--ink);
+}
+.voto-sentido {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+}
+.voto-sentido .dot {
+  width: 7px;
+  height: 7px;
+}
+.voto-sentido .dot.favor {
+  background: var(--favor);
+}
+.voto-sentido .dot.contra {
+  background: var(--contra);
+}
+.voto-sentido .dot.abst {
+  background: var(--abst);
+}
+.voto-sentido .dot.pendiente {
+  background: var(--muted);
 }
 
 /* ---------- Forms ---------- */

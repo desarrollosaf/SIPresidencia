@@ -2,15 +2,21 @@
   <p class="empty">Cargando…</p>
 } @else if (evento(); as ev) {
   <div class="pagehead">
-    <div class="eyebrow">Pleno · Videovigilancia sincronizada</div>
+    <div class="pagehead-top">
+      <div class="eyebrow">Pleno · Videovigilancia sincronizada</div>
+      <a routerLink="/sesiones" class="btn line sm">← Volver a la lista</a>
+    </div>
     <h1>{{ ev.descripcion || 'Sesión' }}</h1>
-    <p>
+    <p class="fecha-linea">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.6" />
+        <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.6" />
+      </svg>
       {{ ev.fecha | date: 'dd/MM/yyyy' }}
       @if (ev.hora) {
         · {{ ev.hora }}
       }
     </p>
-    <a routerLink="/sesiones" class="btn line sm">← Volver a la lista</a>
   </div>
 
   <div class="orden-head">
@@ -18,15 +24,26 @@
       <h3>Orden del día</h3>
       <span class="sub">{{ ev.puntos.length }} puntos</span>
     </div>
-    <div class="segmented">
-      <button type="button" [class.active]="filtro() === 'todos'" (click)="filtro.set('todos')">
+    <div class="filtro-pills">
+      <button
+        type="button"
+        class="filtro-pill"
+        [class.active]="filtro() === 'todos'"
+        (click)="filtro.set('todos')"
+      >
         Todos ({{ ev.puntos.length }})
       </button>
-      <button type="button" [class.active]="filtro() === 'video'" (click)="filtro.set('video')">
+      <button
+        type="button"
+        class="filtro-pill"
+        [class.active]="filtro() === 'video'"
+        (click)="filtro.set('video')"
+      >
         Con video ({{ contarConVideo(ev.puntos) }})
       </button>
       <button
         type="button"
+        class="filtro-pill"
         [class.active]="filtro() === 'sin-video'"
         (click)="filtro.set('sin-video')"
       >
@@ -62,14 +79,19 @@
             <div class="punto-row-actions" (click)="$event.stopPropagation()">
               <button
                 type="button"
-                class="btn sm line"
-                [class.activo]="votosAbierto() === punto.id"
+                class="btn sm"
+                [class.line]="votosAbierto() !== punto.id"
                 (click)="alternarVotos(punto)"
               >
                 {{ votosAbierto() === punto.id ? 'Ocultar votos' : 'Ver votos' }}
               </button>
               @if (punto.video_url) {
-                <button type="button" class="btn sm" (click)="alternarMedia(punto)">
+                <button
+                  type="button"
+                  class="btn sm"
+                  [class.line]="puntoAbierto() !== punto.id"
+                  (click)="alternarMedia(punto)"
+                >
                   {{ puntoAbierto() === punto.id ? 'Ocultar' : 'Ver grabación' }}
                 </button>
               }
@@ -163,61 +185,97 @@
                       @let conteo = conteoVotos(votos);
                       <div class="votos-resultado">
                         <div class="vbox favor">
-                          <div class="n tnum">{{ conteo.favor }}</div>
-                          <div class="l">A favor</div>
+                          <div class="vbox-icono">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.7" />
+                              <circle cx="16" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.7" />
+                              <path d="M3 19c.5-3.3 2.7-5 6-5s5.5 1.7 6 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                              <path d="M14.5 14.3c2.6.3 4 1.8 4.4 4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div class="n tnum">{{ conteo.favor }}</div>
+                            <div class="l">A favor</div>
+                          </div>
                         </div>
                         <div class="vbox contra">
-                          <div class="n tnum">{{ conteo.contra }}</div>
-                          <div class="l">En contra</div>
+                          <div class="vbox-icono">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <path d="M7 7l10 10M17 7 7 17" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div class="n tnum">{{ conteo.contra }}</div>
+                            <div class="l">En contra</div>
+                          </div>
                         </div>
                         <div class="vbox abst">
-                          <div class="n tnum">{{ conteo.abstencion }}</div>
-                          <div class="l">Abstención</div>
+                          <div class="vbox-icono">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <path d="M6 12h12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div class="n tnum">{{ conteo.abstencion }}</div>
+                            <div class="l">Abstención</div>
+                          </div>
                         </div>
                         <div class="vbox">
-                          <div class="n tnum">{{ conteo.pendiente }}</div>
-                          <div class="l">Pendientes</div>
+                          <div class="vbox-icono">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.7" />
+                              <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div class="n tnum">{{ conteo.pendiente }}</div>
+                            <div class="l">Pendientes</div>
+                          </div>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        (click)="alternarDetalleVotos(punto.id)"
-                        style="
-                          margin-top: 10px;
-                          background: none;
-                          border: 0;
-                          padding: 4px 0;
-                          color: var(--muted);
-                          font-size: 12.5px;
-                          text-decoration: underline;
-                          cursor: pointer;
-                        "
-                      >
-                        {{
-                          detalleVotosAbierto() === punto.id
-                            ? 'Ocultar detalle por diputado'
-                            : 'Ver detalle por diputado'
-                        }}
-                      </button>
+                      <div class="votos-detalle-head">
+                        <button type="button" class="link-toggle" (click)="alternarDetalleVotos(punto.id)">
+                          {{
+                            detalleVotosAbierto() === punto.id
+                              ? 'Ocultar detalle por diputado'
+                              : 'Ver detalle por diputado'
+                          }}
+                        </button>
+                        @if (detalleVotosAbierto() === punto.id) {
+                          <div class="input-icon">
+                            <svg viewBox="0 0 24 24" fill="none">
+                              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.9" />
+                              <path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                            </svg>
+                            <input
+                              class="input"
+                              placeholder="Buscar diputado…"
+                              [value]="busquedaDiputado()"
+                              (input)="actualizarBusquedaDiputado($event)"
+                            />
+                          </div>
+                        }
+                      </div>
 
                       @if (detalleVotosAbierto() === punto.id) {
-                        <table class="tbl" style="margin-top: 8px">
-                          <thead>
-                            <tr>
-                              <th>Diputado</th>
-                              <th>Sentido</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            @for (integrante of votos.integrantes; track $index) {
-                              <tr>
-                                <td>{{ nombreIntegrante(integrante) }}</td>
-                                <td>{{ etiquetaVoto(sentidoIntegrante(integrante)) }}</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
+                        <div class="votos-lista">
+                          <div class="votos-lista-head">
+                            <span>Diputado/a</span>
+                            <span>Sentido del voto</span>
+                          </div>
+                          @for (integrante of integrantesFiltrados(votos); track $index) {
+                            <div class="votos-lista-fila">
+                              <span>{{ nombreIntegrante(integrante) }}</span>
+                              <span class="voto-sentido">
+                                <span class="dot" [class]="claseVoto(sentidoIntegrante(integrante))"></span>
+                                {{ etiquetaVoto(sentidoIntegrante(integrante)) }}
+                              </span>
+                            </div>
+                          } @empty {
+                            <p class="empty" style="padding: 12px 0">Ningún diputado coincide con la búsqueda.</p>
+                          }
+                        </div>
                       }
                     }
                   }

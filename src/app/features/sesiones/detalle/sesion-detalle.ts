@@ -27,6 +27,7 @@ export class SesionDetalle implements OnInit {
   protected readonly cargandoVotos = signal<number | null>(null);
   protected readonly detalleVotosAbierto = signal<number | null>(null);
   protected readonly duracionPorPunto = signal<Record<number, number>>({});
+  protected readonly busquedaDiputado = signal('');
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -132,7 +133,30 @@ export class SesionDetalle implements OnInit {
   }
 
   protected alternarDetalleVotos(puntoId: number): void {
+    this.busquedaDiputado.set('');
     this.detalleVotosAbierto.set(this.detalleVotosAbierto() === puntoId ? null : puntoId);
+  }
+
+  protected actualizarBusquedaDiputado(evento: Event): void {
+    this.busquedaDiputado.set((evento.target as HTMLInputElement).value);
+  }
+
+  protected integrantesFiltrados(votos: VotosPunto): unknown[] {
+    const texto = this.busquedaDiputado().trim().toLowerCase();
+    if (!texto) return votos.integrantes;
+    return votos.integrantes.filter((integrante) =>
+      this.nombreIntegrante(integrante).toLowerCase().includes(texto),
+    );
+  }
+
+  protected claseVoto(sentido: unknown): string {
+    const clases: Record<number, string> = {
+      0: 'pendiente',
+      1: 'favor',
+      2: 'contra',
+      3: 'abst',
+    };
+    return clases[Number(sentido)] ?? 'pendiente';
   }
 
   protected conteoVotos(votos: VotosPunto): {
