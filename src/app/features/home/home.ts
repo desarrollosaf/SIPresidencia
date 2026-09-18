@@ -1,6 +1,7 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { AgendaService, EventoAgenda, ResumenAgenda } from '../../core/services/agenda.service';
 
 interface Modulo {
   nombre: string;
@@ -28,6 +29,8 @@ const MODULOS: Modulo[] = [
   },
 ];
 
+type Segmento = 'hoy' | 'semana' | 'todos';
+
 @Component({
   selector: 'app-home',
   imports: [RouterLink],
@@ -38,10 +41,47 @@ export class Home implements OnInit, OnDestroy {
   protected readonly ahora = signal(new Date());
   private temporizador?: ReturnType<typeof setInterval>;
 
-  constructor(protected readonly authService: AuthService) {}
+  protected readonly diasSemana = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
+  protected readonly resumen = signal<ResumenAgenda | null>(null);
+  protected readonly cargandoAgenda = signal(true);
+  protected readonly segmento = signal<Segmento>('hoy');
+  protected readonly busqueda = signal('');
+  protected readonly mesVisible = signal(this.iniciarMes(new Date()));
+
+  protected readonly eventosFiltrados = computed(() => {
+    const resumen = this.resumen();
+    if (!resumen) return [];
+
+    const hoyIso = this.aIso(new Date());
+    const limiteSemana = this.aIso(this.sumarDias(new Date(), 7));
+    const todos = [...resumen.eventosHoy, ...resumen.proximosEventos];
+
+    const porSegmento = todos.filter((evento) => {
+      if (this.segmento() === 'hoy') return evento.fecha === hoyIso;
+      if (this.segmento() === 'semana') return evento.fecha <= limiteSemana;
+      return true;
+    });
+
+    const texto = this.busqueda().trim().toLowerCase();
+    if (!texto) return porSegmento;
+    return porSegmento.filter(
+      (evento) =>
+        evento.titulo.toLowerCase().includes(texto) ||
+        evento.ubicacion.toLowerCase().includes(texto),
+    );
+  });
+
+  constructor(
+    protected readonly authService: AuthService,
+    private readonly agendaService: AgendaService,
+  ) {}
 
   ngOnInit(): void {
     this.temporizador = setInterval(() => this.ahora.set(new Date()), 1000);
+    this.agendaService.resumen().subscribe((resumen) => {
+      this.resumen.set(resumen);
+      this.cargandoAgenda.set(false);
+    });
   }
 
   ngOnDestroy(): void {
@@ -72,5 +112,78 @@ export class Home implements OnInit, OnDestroy {
       year: 'numeric',
     }).format(this.ahora());
     return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  protected fechaCorta(fechaIso: string): string {
+    return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
+      .format(new Date(fechaIso))
+      .replace('.', '');
+  }
+
+  protected rangoHora(evento: EventoAgenda): string {
+    return evento.horaFin ? `${evento.horaInicio} - ${evento.horaFin} h` : `${evento.horaInicio} h`;
+  }
+
+  protected actualizarBusqueda(evento: Event): void {
+    this.busqueda.set((evento.target as HTMLInputElement).value);
+  }
+
+  protected tituloLista(): string {
+    if (this.segmento() === 'hoy') return 'Eventos de hoy';
+    if (this.segmento() === 'semana') return 'Eventos de esta semana';
+    return 'Todos los eventos';
+  }
+
+  protected etiquetaMes(): string {
+    const texto = new Intl.DateTimeFormat('es-MX', { month: 'short', year: 'numeric' })
+      .format(this.mesVisible())
+      .replace('.', '');
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  protected diasDelMes(): (Date | null)[] {
+    const m = this.mesVisible();
+    const primerDia = new Date(m.getFullYear(), m.getMonth(), 1);
+    const offset = (primerDia.getDay() + 6) % 7; // semana inicia en lunes
+    const totalDias = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate();
+    const celdas: (Date | null)[] = [];
+    for (let i = 0; i < offset; i++) celdas.push(null);
+    for (let d = 1; d <= totalDias; d++) celdas.push(new Date(m.getFullYear(), m.getMonth(), d));
+    return celdas;
+  }
+
+  protected mesAnterior(): void {
+    const m = this.mesVisible();
+    this.mesVisible.set(new Date(m.getFullYear(), m.getMonth() - 1, 1));
+  }
+
+  protected mesSiguiente(): void {
+    const m = this.mesVisible();
+    this.mesVisible.set(new Date(m.getFullYear(), m.getMonth() + 1, 1));
+  }
+
+  protected esHoy(fecha: Date): boolean {
+    return this.aIso(fecha) === this.aIso(new Date());
+  }
+
+  protected tieneEvento(fecha: Date): boolean {
+    return (this.resumen()?.diasConEventos ?? []).includes(this.aIso(fecha));
+  }
+
+  private iniciarMes(fecha: Date): Date {
+    return new Date(fecha.getFullYear(), fecha.getMonth(), 1);
+  }
+
+  private sumarDias(base: Date, dias: number): Date {
+    const copia = new Date(base);
+    copia.setDate(copia.getDate() + dias);
+    return copia;
+  }
+
+  private aIso(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const d = fecha.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 }

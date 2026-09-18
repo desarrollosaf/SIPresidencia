@@ -381,10 +381,17 @@ button {
 }
 .card-h h3 {
   font-size: 16px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .card-h .sub {
+  flex: none;
   font-size: 12px;
   color: var(--muted);
+  white-space: nowrap;
   margin-left: auto;
   font-family: 'Inter';
 }
@@ -797,50 +804,77 @@ button {
 .sesion-fila {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 14px 18px;
+  padding: 15px 20px;
   box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
   transition:
     box-shadow 0.15s,
-    transform 0.15s;
+    transform 0.15s,
+    border-color 0.15s;
+}
+.sesion-fila::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--primary), var(--brass));
+  opacity: 0;
+  transition: opacity 0.15s;
 }
 .sesion-fila:hover {
   box-shadow: var(--shadow);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: var(--primary-soft);
+}
+.sesion-fila:hover::before {
+  opacity: 1;
 }
 .sesion-fila .fecha-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   background: var(--primary-soft);
   color: var(--primary);
   flex: none;
 }
 .sesion-fila .fecha-badge .dia {
   font-family: 'Spectral', serif;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1;
 }
 .sesion-fila .fecha-badge .mes {
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
 }
 .sesion-fila .info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sesion-fila .info .pill {
+  align-self: flex-start;
 }
 .sesion-fila h3 {
-  font-size: 14.5px;
-  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -849,12 +883,17 @@ button {
   flex: none;
   color: var(--muted);
   font-size: 13px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 4px;
+  transition:
+    gap 0.15s,
+    color 0.15s;
 }
 .sesion-fila:hover .ir {
   color: var(--primary);
+  gap: 7px;
 }
 
 /* ---------- Orden del día: cabecera y filtros ---------- */
@@ -1302,6 +1341,355 @@ button {
   font-size: 12.5px;
   color: #e7bcd4;
   margin-top: 2px;
+}
+
+/* ---------- Inicio / agenda del Congreso ---------- */
+.agenda-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.agenda-head h2 {
+  font-size: 20px;
+  color: var(--ink);
+}
+.agenda-head .sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.agenda-head-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.agenda-head-acciones .input-icon {
+  width: 250px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.stat-icono {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.stat-icono svg {
+  width: 20px;
+  height: 20px;
+}
+.stat-icono.acc1 {
+  background: var(--acc1-soft);
+  color: var(--acc1);
+}
+.stat-icono.acc2 {
+  background: var(--acc2-soft);
+  color: var(--acc2);
+}
+.stat-icono.acc3 {
+  background: var(--acc3-soft);
+  color: var(--acc3);
+}
+.stat-icono.brass {
+  background: var(--brass-soft);
+  color: #7c5a17;
+}
+.stat-num {
+  font-family: 'Spectral', serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+.stat-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.agenda-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 0.9fr;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+@media (max-width: 1000px) {
+  .agenda-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.destacado-body {
+  display: flex;
+  gap: 16px;
+  padding: 16px 18px;
+}
+.destacado-imagen {
+  flex: none;
+  width: 108px;
+  height: 96px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(150deg, var(--primary-soft), var(--brass-soft));
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+}
+.destacado-imagen svg {
+  width: 30px;
+  height: 30px;
+  opacity: 0.7;
+}
+.destacado-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.destacado-info .pill {
+  align-self: flex-start;
+}
+.destacado-info h4 {
+  margin: 0;
+  font-size: 15px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.destacado-info p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.destacado-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 2px;
+}
+.destacado-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.destacado-meta svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+
+.eventos-hoy-lista {
+  display: flex;
+  flex-direction: column;
+}
+.evento-hoy-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+.evento-hoy-fila:last-child {
+  border-bottom: 0;
+}
+.evento-hoy-hora {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  width: 40px;
+}
+.evento-hoy-info {
+  flex: 1;
+  min-width: 0;
+}
+.evento-hoy-info .titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evento-hoy-info .lugar {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.punto-primary {
+  background: var(--primary);
+}
+.punto-brass {
+  background: var(--brass);
+}
+.punto-favor {
+  background: var(--favor);
+}
+.punto-acc4 {
+  background: var(--acc4);
+}
+
+.mini-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px 4px;
+}
+.mini-cal-mes {
+  font-family: 'Spectral', serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+}
+.mini-cal-head button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: none;
+  border: 0;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+}
+.mini-cal-head button:hover {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+.mini-cal-head button svg {
+  width: 15px;
+  height: 15px;
+}
+.mini-cal-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 14px;
+}
+.mini-cal-semana span {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0 14px 12px;
+}
+.mini-cal-dia {
+  position: relative;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 12px;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.mini-cal-dia.hoy {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+.mini-cal-dia.con-evento::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brass);
+}
+.mini-cal-dia.hoy.con-evento::after {
+  background: #fff;
+}
+.mini-cal-proximos {
+  border-top: 1px solid var(--line-2);
+  padding: 12px 18px 16px;
+}
+.mini-cal-proximos-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.mini-cal-proximos-h span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mini-cal-proximos-h a {
+  flex: none;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--primary);
+  font-weight: 600;
+}
+.mini-cal-proximo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+}
+.mini-cal-proximo-item .dot {
+  margin-top: 5px;
+}
+.mini-cal-proximo-item .fecha {
+  font-size: 11px;
+  color: var(--muted);
+}
+.mini-cal-proximo-item .titulo {
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 550;
 }
 
 .modulos-grid {
