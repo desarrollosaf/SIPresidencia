@@ -1,5 +1,8 @@
 <div class="app-shell">
-  <aside class="sidebar">
+  @if (sidebarAbierto()) {
+    <div class="sidebar-backdrop" (click)="cerrarSidebar()"></div>
+  }
+  <aside class="sidebar" [class.open]="sidebarAbierto()">
     <div class="brand">
       <div class="seal">SP</div>
       <div class="brand-txt">
@@ -10,7 +13,13 @@
     <nav class="nav">
       <div class="nav-label">Menú principal</div>
       @for (item of nav; track item.route) {
-        <button type="button" class="nav-item" [routerLink]="item.route" routerLinkActive="active">
+        <button
+          type="button"
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          (click)="cerrarSidebar()"
+        >
           @switch (item.icono) {
             @case ('inicio') {
               <svg viewBox="0 0 24 24" fill="none">
@@ -68,6 +77,16 @@
 
   <div class="main">
     <div class="topbar">
+      <button type="button" class="menu-btn" aria-label="Abrir menú" (click)="alternarSidebar()">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
       <span class="crumb"><b>SIPresidencia</b></span>
       <div class="topbar-actions">
         <button type="button" class="bell-btn" title="Notificaciones">

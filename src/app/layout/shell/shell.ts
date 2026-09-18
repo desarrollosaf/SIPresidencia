@@ -1,4 +1,4 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ToastContainer } from '../../shared/toast/toast-container';
@@ -23,6 +23,7 @@ export class Shell {
   protected readonly nav = NAV;
   protected readonly user;
   protected readonly iniciales;
+  protected readonly sidebarAbierto = signal(false);
 
   constructor(
     private readonly authService: AuthService,
@@ -45,5 +46,13 @@ export class Shell {
   logout(): void {
     this.authService.logout();
     void this.router.navigateByUrl('/login');
+  }
+
+  protected alternarSidebar(): void {
+    this.sidebarAbierto.set(!this.sidebarAbierto());
+  }
+
+  protected cerrarSidebar(): void {
+    this.sidebarAbierto.set(false);
   }
 }
