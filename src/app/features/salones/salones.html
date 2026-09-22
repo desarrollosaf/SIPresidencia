@@ -152,21 +152,6 @@
         }
       </div>
 
-      @if (eventoSeleccionado(); as sel) {
-        <div class="evento-detalle" [style.border-left-color]="sel.salonColor">
-          <div class="evento-detalle-texto">
-            <span class="evento-detalle-salon">{{ sel.salonNombre }}</span>
-            <strong>{{ sel.evento.titulo }}</strong>
-            <span class="evento-detalle-hora">{{ rangoHora(sel.evento) }} h</span>
-          </div>
-          <button type="button" class="evento-detalle-cerrar" (click)="cerrarEventoSeleccionado()" aria-label="Cerrar">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </button>
-        </div>
-      }
-
       <p class="timeline-nota">Los horarios están en hora del centro de México (GMT-6). Toca un evento en la línea de tiempo para ver su descripción completa.</p>
     </div>
   } @else {
@@ -192,4 +177,37 @@
       </div>
     </div>
   }
+}
+
+@if (eventoSeleccionado(); as sel) {
+  <div class="modal-backdrop" (click)="cerrarEventoSeleccionado()">
+    <div class="modal-evento" (click)="$event.stopPropagation()">
+      <div class="modal-evento-barra" [style.background]="sel.salonColor"></div>
+      <button type="button" class="modal-evento-cerrar" (click)="cerrarEventoSeleccionado()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </button>
+      <div class="modal-evento-cuerpo">
+        <span class="modal-evento-salon" [style.color]="sel.salonColor">
+          <span class="dot" [style.background]="sel.salonColor"></span>
+          {{ sel.salonNombre }}
+        </span>
+        <h3>{{ sel.evento.titulo }}</h3>
+        @if (sel.evento.descripcion) {
+          <p>{{ sel.evento.descripcion }}</p>
+        }
+        <div class="modal-evento-datos">
+          <span>
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.7" />
+              <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            {{ rangoHora(sel.evento) }} h
+          </span>
+          <span class="pill gray">{{ sel.evento.tipo }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 }

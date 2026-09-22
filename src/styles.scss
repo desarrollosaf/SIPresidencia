@@ -2058,6 +2058,7 @@ a.modulo-card:hover {
   bottom: -4px;
   width: 2px;
   background: var(--live);
+  pointer-events: none;
 }
 .timeline-nota {
   padding: 10px 18px 0;
@@ -2065,55 +2066,112 @@ a.modulo-card:hover {
   color: var(--muted);
 }
 
-.evento-detalle {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 14px 18px 0;
-  padding: 12px 14px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--primary);
-  border-radius: var(--radius-sm);
+/* ---------- Modal de evento (salones) ---------- */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
 }
-.evento-detalle-texto {
+@keyframes modal-evento-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(15, 17, 23, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  animation: modal-backdrop-in 0.15s ease-out;
+}
+.modal-evento {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 50px rgba(15, 17, 23, 0.35);
+  animation: modal-evento-in 0.18s ease-out;
+}
+.modal-evento-barra {
+  height: 6px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.modal-evento-cerrar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--surface-2);
+  border: 0;
+  color: var(--ink-2);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.modal-evento-cerrar:hover {
+  background: var(--line-2);
+  color: var(--ink);
+}
+.modal-evento-cerrar svg {
+  width: 15px;
+  height: 15px;
+}
+.modal-evento-cuerpo {
+  padding: 26px 26px 24px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 0;
+  gap: 10px;
 }
-.evento-detalle-salon {
-  font-size: 11px;
-  font-weight: 600;
+.modal-evento-salon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 11.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--muted);
+  letter-spacing: 0.04em;
 }
-.evento-detalle-texto strong {
+.modal-evento-cuerpo h3 {
+  font-size: 19px;
+  line-height: 1.35;
+  color: var(--ink);
+  padding-right: 20px;
+}
+.modal-evento-cuerpo p {
+  margin: 0;
   font-size: 13.5px;
-  color: var(--ink);
-  line-height: 1.4;
-}
-.evento-detalle-hora {
-  font-size: 12px;
   color: var(--ink-2);
+  line-height: 1.6;
 }
-.evento-detalle-cerrar {
-  flex: none;
-  background: none;
-  border: 0;
-  color: var(--muted);
-  padding: 4px;
-  border-radius: 6px;
+.modal-evento-datos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-2);
 }
-.evento-detalle-cerrar:hover {
-  background: var(--surface);
+.modal-evento-datos > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ink);
 }
-.evento-detalle-cerrar svg {
-  width: 14px;
-  height: 14px;
+.modal-evento-datos svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
 }
 @media (max-width: 720px) {
   .salones-filtros .salones-fecha,
