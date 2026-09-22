@@ -21,6 +21,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/sesiones/sesiones.routes').then((m) => m.SESIONES_ROUTES),
       },
+      {
+        path: 'salones',
+        loadChildren: () =>
+          import('./features/salones/salones.routes').then((m) => m.SALONES_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

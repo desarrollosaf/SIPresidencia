@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AgendaService, EventoAgenda, ResumenAgenda } from '../../core/services/agenda.service';
+import { ToastService } from '../../core/services/toast.service';
 
 interface Modulo {
   nombre: string;
@@ -74,13 +75,20 @@ export class Home implements OnInit, OnDestroy {
   constructor(
     protected readonly authService: AuthService,
     private readonly agendaService: AgendaService,
+    private readonly toastService: ToastService,
   ) {}
 
   ngOnInit(): void {
     this.temporizador = setInterval(() => this.ahora.set(new Date()), 1000);
-    this.agendaService.resumen().subscribe((resumen) => {
-      this.resumen.set(resumen);
-      this.cargandoAgenda.set(false);
+    this.agendaService.resumen().subscribe({
+      next: (resumen) => {
+        this.resumen.set(resumen);
+        this.cargandoAgenda.set(false);
+      },
+      error: () => {
+        this.cargandoAgenda.set(false);
+        this.toastService.error('No se pudo cargar la agenda del Congreso.');
+      },
     });
   }
 
@@ -116,7 +124,7 @@ export class Home implements OnInit, OnDestroy {
 
   protected fechaCorta(fechaIso: string): string {
     return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
-      .format(new Date(fechaIso))
+      .format(this.aFechaLocal(fechaIso))
       .replace('.', '');
   }
 
@@ -185,5 +193,11 @@ export class Home implements OnInit, OnDestroy {
     const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
     const d = fecha.getDate().toString().padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  // new Date('yyyy-mm-dd') se interpreta como UTC y se corre un día en zonas horarias negativas.
+  private aFechaLocal(fechaIso: string): Date {
+    const [y, m, d] = fechaIso.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }

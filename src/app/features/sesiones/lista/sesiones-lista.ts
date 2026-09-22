@@ -46,12 +46,12 @@ export class SesionesLista implements OnInit {
   }
 
   protected dia(fechaIso: string): string {
-    return new Intl.DateTimeFormat('es-MX', { day: 'numeric' }).format(new Date(fechaIso));
+    return new Intl.DateTimeFormat('es-MX', { day: 'numeric' }).format(this.aFechaLocal(fechaIso));
   }
 
   protected mesCorto(fechaIso: string): string {
     return new Intl.DateTimeFormat('es-MX', { month: 'short' })
-      .format(new Date(fechaIso))
+      .format(this.aFechaLocal(fechaIso))
       .replace('.', '');
   }
 
@@ -154,6 +154,12 @@ export class SesionesLista implements OnInit {
     const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
     const d = fecha.getDate().toString().padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  // new Date('yyyy-mm-dd') se interpreta como UTC y se corre un día en zonas horarias negativas.
+  private aFechaLocal(fechaIso: string): Date {
+    const [y, m, d] = fechaIso.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 }
 

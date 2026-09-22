@@ -1,6 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface EventoAgenda {
   id: string;
@@ -30,6 +32,86 @@ export interface ResumenAgenda {
   diasConEventos: string[]; // ISO yyyy-mm-dd
 }
 
+export interface SalonAgenda {
+  id: number;
+  nombre: string;
+  color: string;
+  eventos: EventoAgenda[];
+}
+
+interface EventoAgendaApi {
+  fecha_termino: string;
+  hora_inicio: string;
+  hora_termino: string | null;
+  sede: string;
+  titulo: string;
+  descripcion: string | null;
+  evento: string | null;
+  materia: string | null;
+  modalidad: string | null;
+  tipo_reunion: string | null;
+  folio: string | null;
+  referencia: string | null;
+}
+
+interface SedeAgendaApi {
+  id: number;
+  salon: string;
+  color: string;
+  agenda: { fecha_inicio: string }[];
+}
+
+interface AgendaApiResponse {
+  success: boolean;
+  agenda: Record<string, EventoAgendaApi[]>;
+  sedes: SedeAgendaApi[];
+}
+
+// El folio identifica trámites internos (p. ej. "18001/3383/2026"); cuando el
+// título trae eso en vez de una categoría legible, usamos tipo_reunion.
+const FOLIO_PATTERN = /^\d+\/\d+\/\d+$/;
+
+function horaDe(fechaHora: string | null): string | null {
+  return fechaHora ? fechaHora.slice(11, 16) : null;
+}
+
+function categoriaDe(ev: EventoAgendaApi): string {
+  if (ev.titulo && !FOLIO_PATTERN.test(ev.titulo)) return ev.titulo;
+  return ev.tipo_reunion ?? 'Evento institucional';
+}
+
+function colorDeCategoria(categoria: string): EventoAgenda['tipoColor'] {
+  const texto = categoria.toLowerCase();
+  if (texto.includes('sesión') || texto.includes('sesion')) return 'primary';
+  if (texto.includes('comisión') || texto.includes('comision')) return 'favor';
+  if (texto.includes('otro') || texto.includes('privad')) return 'acc4';
+  return 'brass';
+}
+
+function descripcionSecundaria(ev: EventoAgendaApi, titulo: string): string {
+  if (ev.materia && ev.materia !== titulo) return ev.materia;
+  if (ev.modalidad) return `Modalidad: ${ev.modalidad}`;
+  return '';
+}
+
+function mapEvento(fecha: string, ev: EventoAgendaApi, indice: number): EventoAgenda {
+  const categoria = categoriaDe(ev);
+  const titulo = ev.descripcion || ev.evento || categoria;
+  return {
+    id: `${fecha}-${indice}`,
+    titulo,
+    descripcion: descripcionSecundaria(ev, titulo),
+    fecha,
+    horaInicio: horaDe(ev.hora_inicio) ?? '—',
+    horaFin: horaDe(ev.hora_termino),
+    ubicacion: ev.sede,
+    tipo: categoria,
+    tipoColor: colorDeCategoria(categoria),
+    destacado: false,
+    imagenUrl: null,
+  };
+}
+
 function aIso(fecha: Date): string {
   const y = fecha.getFullYear();
   const m = (fecha.getMonth() + 1).toString().padStart(2, '0');
@@ -43,128 +125,84 @@ function sumarDias(base: Date, dias: number): Date {
   return copia;
 }
 
-function construirResumenEjemplo(): ResumenAgenda {
-  const hoy = new Date();
+function mapearTodosLosEventos(resp: AgendaApiResponse): EventoAgenda[] {
+  const dias = Object.keys(resp.agenda).sort();
+  return dias.flatMap((fecha) => resp.agenda[fecha].map((ev, indice) => mapEvento(fecha, ev, indice)));
+}
 
-  const eventos: EventoAgenda[] = [
-    {
-      id: 'demo-1',
-      titulo: 'Sesión solemne de apertura',
-      descripcion:
-        'Inauguración del Segundo Periodo Ordinario de Sesiones del Congreso del Estado de México.',
-      fecha: aIso(hoy),
-      horaInicio: '10:00',
-      horaFin: '12:00',
-      ubicacion: 'Salón de Plenos',
-      tipo: 'Sesión',
-      tipoColor: 'primary',
-      destacado: true,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-2',
-      titulo: 'Reunión de la Junta de Coordinación Política',
-      descripcion: 'Acuerdos sobre la agenda legislativa del periodo.',
-      fecha: aIso(hoy),
-      horaInicio: '13:00',
-      horaFin: '14:00',
-      ubicacion: 'Sala de Juntas',
-      tipo: 'Comisión',
-      tipoColor: 'favor',
-      destacado: false,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-3',
-      titulo: 'Foro de Participación Ciudadana',
-      descripcion: 'Espacio abierto para la ciudadanía sobre temas legislativos.',
-      fecha: aIso(hoy),
-      horaInicio: '16:00',
-      horaFin: '18:00',
-      ubicacion: 'Auditorio "José María Morelos"',
-      tipo: 'Institucional',
-      tipoColor: 'brass',
-      destacado: false,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-4',
-      titulo: 'Presentación de libro',
-      descripcion: 'Presentación editorial en el vestíbulo principal.',
-      fecha: aIso(hoy),
-      horaInicio: '18:00',
-      horaFin: null,
-      ubicacion: 'Vestíbulo Principal',
-      tipo: 'Cultural',
-      tipoColor: 'acc4',
-      destacado: false,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-5',
-      titulo: 'Foro de innovación legislativa',
-      descripcion: 'Encuentro sobre herramientas digitales para el trabajo parlamentario.',
-      fecha: aIso(sumarDias(hoy, 6)),
-      horaInicio: '11:00',
-      horaFin: '13:00',
-      ubicacion: 'Auditorio "José María Morelos"',
-      tipo: 'Institucional',
-      tipoColor: 'brass',
-      destacado: false,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-6',
-      titulo: 'Sesión ordinaria',
-      descripcion: 'Sesión ordinaria del Pleno del Congreso.',
-      fecha: aIso(sumarDias(hoy, 11)),
-      horaInicio: '10:00',
-      horaFin: null,
-      ubicacion: 'Salón de Plenos',
-      tipo: 'Sesión',
-      tipoColor: 'primary',
-      destacado: false,
-      imagenUrl: null,
-    },
-    {
-      id: 'demo-7',
-      titulo: 'Comisión de Presupuesto',
-      descripcion: 'Análisis del paquete fiscal para el siguiente ejercicio.',
-      fecha: aIso(sumarDias(hoy, 2)),
-      horaInicio: '09:30',
-      horaFin: '11:30',
-      ubicacion: 'Sala de Comisiones 2',
-      tipo: 'Comisión',
-      tipoColor: 'favor',
-      destacado: false,
-      imagenUrl: null,
-    },
-  ];
+function construirResumen(resp: AgendaApiResponse): ResumenAgenda {
+  const hoyIso = aIso(new Date());
+  const limiteSemanaIso = aIso(sumarDias(new Date(), 7));
 
-  const eventosHoy = eventos.filter((e) => e.fecha === aIso(hoy));
-  const proximosEventos = eventos
-    .filter((e) => e.fecha > aIso(hoy))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const dias = Object.keys(resp.agenda).sort();
+  const todosLosEventos = mapearTodosLosEventos(resp);
+
+  const eventosHoy = todosLosEventos
+    .filter((e) => e.fecha === hoyIso)
+    .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+
+  const proximosEventos = todosLosEventos
+    .filter((e) => e.fecha > hoyIso)
+    .sort((a, b) =>
+      a.fecha === b.fecha ? a.horaInicio.localeCompare(b.horaInicio) : a.fecha.localeCompare(b.fecha),
+    );
+
+  const destacadoHoy = eventosHoy.find((e) => e.tipoColor === 'primary') ?? eventosHoy[0] ?? null;
+
+  const salonesOcupados = resp.sedes.filter((sede) =>
+    sede.agenda.some((a) => a.fecha_inicio === hoyIso),
+  ).length;
+
+  const eventosDestacadosSemana = todosLosEventos.filter(
+    (e) => e.tipoColor === 'primary' && e.fecha >= hoyIso && e.fecha <= limiteSemanaIso,
+  ).length;
 
   return {
     totales: {
       eventosHoy: eventosHoy.length,
-      proximosEventos: proximosEventos.length,
-      salonesOcupados: 2,
-      salonesDisponibles: 5,
-      eventosDestacados: eventos.filter((e) => e.destacado).length,
+      proximosEventos: proximosEventos.filter((e) => e.fecha <= limiteSemanaIso).length,
+      salonesOcupados,
+      salonesDisponibles: resp.sedes.length,
+      eventosDestacados: eventosDestacadosSemana,
     },
-    eventoDestacado: eventos.find((e) => e.destacado) ?? null,
+    eventoDestacado: destacadoHoy ? { ...destacadoHoy, destacado: true } : null,
     eventosHoy,
     proximosEventos,
-    diasConEventos: eventos.map((e) => e.fecha),
+    diasConEventos: dias,
   };
+}
+
+function construirSalones(resp: AgendaApiResponse): SalonAgenda[] {
+  const todosLosEventos = mapearTodosLosEventos(resp);
+
+  return resp.sedes
+    .filter((sede) => sede.salon && sede.salon !== 'N/A')
+    .map((sede) => ({
+      id: sede.id,
+      nombre: sede.salon,
+      color: sede.color,
+      eventos: todosLosEventos
+        .filter((e) => e.ubicacion === sede.salon)
+        .sort((a, b) =>
+          a.fecha === b.fecha ? a.horaInicio.localeCompare(b.horaInicio) : a.fecha.localeCompare(b.fecha),
+        ),
+    }));
 }
 
 @Injectable({ providedIn: 'root' })
 export class AgendaService {
-  // Datos de ejemplo hasta conectar el sistema de agenda en producción; misma forma para sustituir por http.get.
+  // La misma respuesta trae la agenda por día y por salón; se comparte para no duplicar la petición.
+  private readonly datos$: Observable<AgendaApiResponse>;
+
+  constructor(private readonly http: HttpClient) {
+    this.datos$ = this.http.get<AgendaApiResponse>(environment.agendaApiUrl).pipe(shareReplay(1));
+  }
+
   resumen(): Observable<ResumenAgenda> {
-    return of(construirResumenEjemplo()).pipe(delay(200));
+    return this.datos$.pipe(map((respuesta) => construirResumen(respuesta)));
+  }
+
+  salones(): Observable<SalonAgenda[]> {
+    return this.datos$.pipe(map((respuesta) => construirSalones(respuesta)));
   }
 }

@@ -1,0 +1,227 @@
+<div class="pagehead">
+  <div class="eyebrow">SIPresidencia · Salones</div>
+  <h1>Salones</h1>
+  <p>Consulta la ocupación de los salones del Congreso y sus eventos programados.</p>
+</div>
+
+<div class="salones-filtros">
+  <div class="segmented">
+    <button type="button" [class.active]="segmento() === 'hoy'" (click)="segmento.set('hoy')">
+      Hoy
+    </button>
+    <button type="button" [class.active]="segmento() === 'semana'" (click)="segmento.set('semana')">
+      Esta semana
+    </button>
+    <button type="button" [class.active]="segmento() === 'mes'" (click)="segmento.set('mes')">
+      Este mes
+    </button>
+  </div>
+
+  @if (segmento() === 'hoy') {
+    <input
+      type="date"
+      class="input salones-fecha"
+      [value]="fecha()"
+      (change)="actualizarFecha($event)"
+    />
+  }
+
+  <div class="input-icon salones-buscador">
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.9" />
+      <path d="M20 20l-4.3-4.3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+    </svg>
+    <input class="input" placeholder="Buscar salón…" (input)="actualizarBusqueda($event)" />
+  </div>
+
+  <select class="select salones-select" (change)="actualizarFiltroSalon($event)">
+    <option value="todos">Todos los salones</option>
+    @for (salon of salones(); track salon.id) {
+      <option [value]="salon.id">{{ salon.nombre }}</option>
+    }
+  </select>
+</div>
+
+@if (cargando()) {
+  <p class="empty">Cargando salones…</p>
+} @else {
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icono acc1">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+          <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      </div>
+      <div>
+        <div class="stat-num">{{ totales().monitoreados }}</div>
+        <div class="stat-label">Salones monitoreados</div>
+        <div class="stat-sub">Con agenda institucional</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icono contra">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" />
+          <circle cx="16" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.7" />
+          <path d="M3 19c.5-3.3 2.7-5 6-5s5.5 1.7 6 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path d="M14.5 14.3c2.6.3 4 1.8 4.4 4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div>
+        <div class="stat-num">{{ totales().enEvento }}</div>
+        <div class="stat-label">En evento</div>
+        <div class="stat-sub">Actualmente</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icono brass">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.7" />
+          <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div>
+        <div class="stat-num">{{ totales().proximamente }}</div>
+        <div class="stat-label">Próximamente</div>
+        <div class="stat-sub">En la siguiente hora</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icono acc3">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div>
+        <div class="stat-num">{{ totales().disponibles }}</div>
+        <div class="stat-label">Disponibles</div>
+        <div class="stat-sub">Sin eventos hoy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="salones-grid">
+    @for (salon of salonesFiltrados(); track salon.id) {
+      <div class="salon-card">
+        <div class="salon-card-imagen" [style.background]="salon.color + '22'" [style.color]="salon.color">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 21V9.5L12 4l8 5.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="salon-card-body">
+          <h3>{{ salon.nombre }}</h3>
+          <span class="salon-estado" [class]="estadoSalon(salon)">
+            <span class="dot"></span>
+            {{ etiquetaEstado(estadoSalon(salon)) }}
+          </span>
+
+          @if (eventoActual(salon); as evento) {
+            <div class="salon-card-info">
+              <span class="salon-card-info-label">Evento actual</span>
+              <strong>{{ evento.titulo }}</strong>
+              <span>{{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }</span>
+            </div>
+          } @else if (proximoEvento(salon); as evento) {
+            <div class="salon-card-info">
+              <span class="salon-card-info-label">Próximo evento</span>
+              <strong>{{ evento.titulo }}</strong>
+              <span>{{ fechaCorta(evento.fecha) }} · {{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }</span>
+            </div>
+          } @else {
+            <div class="salon-card-info">
+              <span class="salon-card-info-label">Sin eventos programados</span>
+            </div>
+          }
+
+          <button
+            type="button"
+            class="btn sm"
+            [class.line]="estadoSalon(salon) !== 'en-evento'"
+            (click)="filtroSalonId.set(salon.id)"
+          >
+            Ver agenda
+          </button>
+        </div>
+      </div>
+    } @empty {
+      <p class="empty">Ningún salón coincide con la búsqueda.</p>
+    }
+  </div>
+
+  @if (segmento() === 'hoy') {
+    <div class="card timeline-card">
+      <div class="card-h">
+        <h3>Ocupación de salones · {{ etiquetaFechaFoco() }}</h3>
+        <button type="button" class="sub link-boton" (click)="verSemanaCompleta()">Ver semana completa</button>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-scale">
+          <div class="timeline-scale-label" style="width: 168px"></div>
+          <div class="timeline-scale-horas">
+            @for (h of horasEscala; track h) {
+              <span>{{ h }}</span>
+            }
+          </div>
+        </div>
+
+        @for (salon of salonesFiltrados(); track salon.id) {
+          <div class="timeline-row">
+            <div class="timeline-row-label">
+              <span class="dot" [style.background]="salon.color"></span>
+              {{ salon.nombre }}
+            </div>
+            <div class="timeline-row-track">
+              @for (evento of eventosDelDia(salon); track evento.id) {
+                @let pos = posicionBarra(evento);
+                <div
+                  class="timeline-bar"
+                  [style.left.%]="pos.left"
+                  [style.width.%]="pos.width"
+                  [style.background]="salon.color"
+                  [title]="evento.titulo + ' · ' + evento.horaInicio + (evento.horaFin ? ' - ' + evento.horaFin : '')"
+                >
+                  {{ evento.titulo }} · {{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }
+                </div>
+              }
+              @if (posicionAhora(); as ahoraPct) {
+                <div class="timeline-ahora" [style.left.%]="ahoraPct"></div>
+              }
+            </div>
+          </div>
+        } @empty {
+          <p class="empty">Ningún salón coincide con la búsqueda.</p>
+        }
+      </div>
+
+      <p class="timeline-nota">Los horarios están en hora del centro de México (GMT-6).</p>
+    </div>
+  } @else {
+    <div class="card">
+      <div class="card-h">
+        <h3>{{ segmento() === 'semana' ? 'Eventos de esta semana' : 'Eventos de este mes' }}</h3>
+        <span class="sub">{{ eventosSemanaOMes().length }} eventos</span>
+      </div>
+      <div class="eventos-hoy-lista">
+        @for (evento of eventosSemanaOMes(); track evento.id) {
+          <div class="evento-hoy-fila">
+            <div class="evento-hoy-hora tnum">{{ fechaCorta(evento.fecha) }}</div>
+            <span class="dot" [style.background]="evento.salonColor"></span>
+            <div class="evento-hoy-info">
+              <div class="titulo">{{ evento.titulo }}</div>
+              <div class="lugar">{{ evento.salonNombre }} · {{ evento.horaInicio }}</div>
+            </div>
+            <span class="pill gray">{{ evento.tipo }}</span>
+          </div>
+        } @empty {
+          <p class="empty">No hay eventos programados en este periodo.</p>
+        }
+      </div>
+    </div>
+  }
+}
