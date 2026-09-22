@@ -149,43 +149,6 @@ export class Salones implements OnInit, OnDestroy {
     return salon.eventos.filter((e) => e.fecha === this.fecha());
   }
 
-  protected eventoActual(salon: SalonAgenda): EventoAgenda | null {
-    const horaActual = horaActualStr(this.ahora());
-    return (
-      salon.eventos.find(
-        (e) =>
-          e.fecha === this.hoyIso &&
-          e.horaInicio <= horaActual &&
-          (e.horaFin === null || e.horaFin >= horaActual),
-      ) ?? null
-    );
-  }
-
-  protected proximoEvento(salon: SalonAgenda): EventoAgenda | null {
-    const horaActual = horaActualStr(this.ahora());
-    return (
-      salon.eventos.find((e) => e.fecha > this.hoyIso || (e.fecha === this.hoyIso && e.horaInicio > horaActual)) ??
-      null
-    );
-  }
-
-  protected estadoSalon(salon: SalonAgenda): EstadoSalon {
-    return this.estadoDeSalon(salon, this.ahora());
-  }
-
-  protected etiquetaEstado(estado: EstadoSalon): string {
-    switch (estado) {
-      case 'en-evento':
-        return 'En evento';
-      case 'proximamente':
-        return 'Próximamente';
-      case 'sin-eventos':
-        return 'Sin eventos';
-      default:
-        return 'Disponible';
-    }
-  }
-
   protected posicionBarra(evento: EventoAgenda): { left: number; width: number } {
     const inicio = Math.max(RANGO_INICIO, horaDecimal(evento.horaInicio));
     const finRaw = evento.horaFin ? horaDecimal(evento.horaFin) : inicio + 0.5;

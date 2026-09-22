@@ -104,55 +104,6 @@
     </div>
   </div>
 
-  <div class="salones-grid">
-    @for (salon of salonesFiltrados(); track salon.id) {
-      <div class="salon-card">
-        <div class="salon-card-imagen" [style.background]="salon.color + '22'" [style.color]="salon.color">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M4 21V9.5L12 4l8 5.5V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-          </svg>
-        </div>
-        <div class="salon-card-body">
-          <h3>{{ salon.nombre }}</h3>
-          <span class="salon-estado" [class]="estadoSalon(salon)">
-            <span class="dot"></span>
-            {{ etiquetaEstado(estadoSalon(salon)) }}
-          </span>
-
-          @if (eventoActual(salon); as evento) {
-            <div class="salon-card-info">
-              <span class="salon-card-info-label">Evento actual</span>
-              <strong>{{ evento.titulo }}</strong>
-              <span>{{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }</span>
-            </div>
-          } @else if (proximoEvento(salon); as evento) {
-            <div class="salon-card-info">
-              <span class="salon-card-info-label">Próximo evento</span>
-              <strong>{{ evento.titulo }}</strong>
-              <span>{{ fechaCorta(evento.fecha) }} · {{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }</span>
-            </div>
-          } @else {
-            <div class="salon-card-info">
-              <span class="salon-card-info-label">Sin eventos programados</span>
-            </div>
-          }
-
-          <button
-            type="button"
-            class="btn sm"
-            [class.line]="estadoSalon(salon) !== 'en-evento'"
-            (click)="filtroSalonId.set(salon.id)"
-          >
-            Ver agenda
-          </button>
-        </div>
-      </div>
-    } @empty {
-      <p class="empty">Ningún salón coincide con la búsqueda.</p>
-    }
-  </div>
-
   @if (segmento() === 'hoy') {
     <div class="card timeline-card">
       <div class="card-h">
