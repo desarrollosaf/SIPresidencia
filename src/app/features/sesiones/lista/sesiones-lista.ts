@@ -46,13 +46,14 @@ export class SesionesLista implements OnInit {
   }
 
   protected dia(fechaIso: string): string {
-    return new Intl.DateTimeFormat('es-MX', { day: 'numeric' }).format(this.aFechaLocal(fechaIso));
+    const fecha = this.aFechaLocal(fechaIso);
+    return fecha ? new Intl.DateTimeFormat('es-MX', { day: 'numeric' }).format(fecha) : '—';
   }
 
   protected mesCorto(fechaIso: string): string {
-    return new Intl.DateTimeFormat('es-MX', { month: 'short' })
-      .format(this.aFechaLocal(fechaIso))
-      .replace('.', '');
+    const fecha = this.aFechaLocal(fechaIso);
+    if (!fecha) return '';
+    return new Intl.DateTimeFormat('es-MX', { month: 'short' }).format(fecha).replace('.', '');
   }
 
   protected buscarPorFecha(): void {
@@ -157,9 +158,12 @@ export class SesionesLista implements OnInit {
   }
 
   // new Date('yyyy-mm-dd') se interpreta como UTC y se corre un día en zonas horarias negativas.
-  private aFechaLocal(fechaIso: string): Date {
-    const [y, m, d] = fechaIso.split('-').map(Number);
-    return new Date(y, m - 1, d);
+  // Devuelve null si la fecha viene vacía o mal formada (dato real de la API), en vez de reventar el render.
+  private aFechaLocal(fechaIso: string | null | undefined): Date | null {
+    const match = fechaIso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaIso) : null;
+    if (!match) return null;
+    const fecha = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
   }
 }
 

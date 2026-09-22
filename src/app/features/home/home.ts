@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { AgendaService, EventoAgenda, ResumenAgenda } from '../../core/services/agenda.service';
+import { AgendaService, ResumenAgenda } from '../../core/services/agenda.service';
 import { ToastService } from '../../core/services/toast.service';
 
 interface Modulo {
@@ -48,6 +48,7 @@ export class Home implements OnInit, OnDestroy {
   protected readonly segmento = signal<Segmento>('hoy');
   protected readonly busqueda = signal('');
   protected readonly mesVisible = signal(this.iniciarMes(new Date()));
+  protected readonly diaSeleccionado = signal<string | null>(null);
 
   protected readonly eventosFiltrados = computed(() => {
     const resumen = this.resumen();
@@ -56,16 +57,18 @@ export class Home implements OnInit, OnDestroy {
     const hoyIso = this.aIso(new Date());
     const limiteSemana = this.aIso(this.sumarDias(new Date(), 7));
     const todos = [...resumen.eventosHoy, ...resumen.proximosEventos];
+    const diaElegido = this.diaSeleccionado();
 
-    const porSegmento = todos.filter((evento) => {
+    const porFecha = todos.filter((evento) => {
+      if (diaElegido) return evento.fecha === diaElegido;
       if (this.segmento() === 'hoy') return evento.fecha === hoyIso;
       if (this.segmento() === 'semana') return evento.fecha <= limiteSemana;
       return true;
     });
 
     const texto = this.busqueda().trim().toLowerCase();
-    if (!texto) return porSegmento;
-    return porSegmento.filter(
+    if (!texto) return porFecha;
+    return porFecha.filter(
       (evento) =>
         evento.titulo.toLowerCase().includes(texto) ||
         evento.ubicacion.toLowerCase().includes(texto),
@@ -123,20 +126,32 @@ export class Home implements OnInit, OnDestroy {
   }
 
   protected fechaCorta(fechaIso: string): string {
+    const fecha = this.aFechaLocal(fechaIso);
+    if (!fecha) return '';
     return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
-      .format(this.aFechaLocal(fechaIso))
+      .format(fecha)
       .replace('.', '');
-  }
-
-  protected rangoHora(evento: EventoAgenda): string {
-    return evento.horaFin ? `${evento.horaInicio} - ${evento.horaFin} h` : `${evento.horaInicio} h`;
   }
 
   protected actualizarBusqueda(evento: Event): void {
     this.busqueda.set((evento.target as HTMLInputElement).value);
   }
 
+  protected elegirSegmento(segmento: Segmento): void {
+    this.diaSeleccionado.set(null);
+    this.segmento.set(segmento);
+  }
+
+  protected elegirDia(fecha: Date): void {
+    this.diaSeleccionado.set(this.aIso(fecha));
+  }
+
+  protected limpiarDiaSeleccionado(): void {
+    this.diaSeleccionado.set(null);
+  }
+
   protected tituloLista(): string {
+    if (this.diaSeleccionado()) return `Eventos del ${this.fechaCorta(this.diaSeleccionado()!)}`;
     if (this.segmento() === 'hoy') return 'Eventos de hoy';
     if (this.segmento() === 'semana') return 'Eventos de esta semana';
     return 'Todos los eventos';
@@ -174,6 +189,10 @@ export class Home implements OnInit, OnDestroy {
     return this.aIso(fecha) === this.aIso(new Date());
   }
 
+  protected esSeleccionado(fecha: Date): boolean {
+    return this.diaSeleccionado() === this.aIso(fecha);
+  }
+
   protected tieneEvento(fecha: Date): boolean {
     return (this.resumen()?.diasConEventos ?? []).includes(this.aIso(fecha));
   }
@@ -196,8 +215,11 @@ export class Home implements OnInit, OnDestroy {
   }
 
   // new Date('yyyy-mm-dd') se interpreta como UTC y se corre un día en zonas horarias negativas.
-  private aFechaLocal(fechaIso: string): Date {
-    const [y, m, d] = fechaIso.split('-').map(Number);
-    return new Date(y, m - 1, d);
+  // Devuelve null si la fecha viene vacía o mal formada (dato real de la API), en vez de reventar el render.
+  private aFechaLocal(fechaIso: string | null | undefined): Date | null {
+    const match = fechaIso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaIso) : null;
+    if (!match) return null;
+    const fecha = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return Number.isNaN(fecha.getTime()) ? null : fecha;
   }
 }

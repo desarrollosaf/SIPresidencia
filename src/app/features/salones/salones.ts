@@ -36,6 +36,14 @@ function horaDecimal(hhmm: string): number {
   return h + m / 60;
 }
 
+// Devuelve null si la fecha viene vacía o mal formada (dato real de la API), en vez de reventar el render.
+function aFechaLocal(fechaIso: string | null | undefined): Date | null {
+  const match = fechaIso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaIso) : null;
+  if (!match) return null;
+  const fecha = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return Number.isNaN(fecha.getTime()) ? null : fecha;
+}
+
 @Component({
   selector: 'app-salones',
   templateUrl: './salones.html',
@@ -195,9 +203,10 @@ export class Salones implements OnInit, OnDestroy {
   }
 
   protected fechaCorta(fechaIso: string): string {
-    const [y, m, d] = fechaIso.split('-').map(Number);
+    const fecha = aFechaLocal(fechaIso);
+    if (!fecha) return '';
     return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
-      .format(new Date(y, m - 1, d))
+      .format(fecha)
       .replace('.', '');
   }
 

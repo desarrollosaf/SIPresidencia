@@ -16,17 +16,21 @@
   </div>
   <div class="agenda-head-acciones">
     <div class="segmented">
-      <button type="button" [class.active]="segmento() === 'hoy'" (click)="segmento.set('hoy')">
+      <button type="button" [class.active]="segmento() === 'hoy' && !diaSeleccionado()" (click)="elegirSegmento('hoy')">
         Hoy
       </button>
       <button
         type="button"
-        [class.active]="segmento() === 'semana'"
-        (click)="segmento.set('semana')"
+        [class.active]="segmento() === 'semana' && !diaSeleccionado()"
+        (click)="elegirSegmento('semana')"
       >
         Esta semana
       </button>
-      <button type="button" [class.active]="segmento() === 'todos'" (click)="segmento.set('todos')">
+      <button
+        type="button"
+        [class.active]="segmento() === 'todos' && !diaSeleccionado()"
+        (click)="elegirSegmento('todos')"
+      >
         Todos
       </button>
     </div>
@@ -42,7 +46,6 @@
         (input)="actualizarBusqueda($event)"
       />
     </div>
-    <a class="btn sm" routerLink="/sesiones">Ver calendario completo</a>
   </div>
 </div>
 
@@ -114,72 +117,14 @@
   <p class="empty">Cargando agenda…</p>
 } @else {
   <div class="agenda-grid">
-    <div class="card destacado-card">
-      <div class="card-h">
-        <svg viewBox="0 0 24 24" fill="none" style="width: 16px; height: 16px; color: var(--brass)">
-          <path
-            d="M12 3.5l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8 2.4-4.9Z"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linejoin="round"
-          />
-        </svg>
-        <h3>Evento destacado</h3>
-        @if (resumen()?.eventoDestacado) {
-          <a class="sub" routerLink="/sesiones">Ver detalles →</a>
-        }
-      </div>
-
-      @if (resumen()?.eventoDestacado; as evento) {
-        <div class="destacado-body">
-          <div class="destacado-imagen">
-            <svg viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5" />
-              <path d="M3 15l5-4 4 3 4-5 5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div class="destacado-info">
-            <span class="pill gray">{{ evento.tipo }}</span>
-            <h4>{{ evento.titulo }}</h4>
-            <p>{{ evento.descripcion }}</p>
-            <div class="destacado-meta">
-              <span>
-                <svg viewBox="0 0 24 24" fill="none">
-                  <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.6" />
-                  <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.6" />
-                </svg>
-                {{ fecha() }}
-              </span>
-              <span>
-                <svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" />
-                  <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                </svg>
-                {{ rangoHora(evento) }}
-              </span>
-              <span>
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M12 21s7-6.1 7-11.3A7 7 0 0 0 5 9.7C5 14.9 12 21 12 21Z"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                  />
-                  <circle cx="12" cy="9.5" r="2.2" stroke="currentColor" stroke-width="1.6" />
-                </svg>
-                {{ evento.ubicacion }}
-              </span>
-            </div>
-          </div>
-        </div>
-      } @else {
-        <p class="empty">No hay un evento destacado por ahora.</p>
-      }
-    </div>
-
     <div class="card eventos-hoy-card">
       <div class="card-h">
         <h3>{{ tituloLista() }}</h3>
-        <a class="sub" routerLink="/sesiones">Ver todos →</a>
+        @if (diaSeleccionado()) {
+          <button type="button" class="sub link-boton" (click)="limpiarDiaSeleccionado()">
+            Quitar filtro ✕
+          </button>
+        }
       </div>
       <div class="eventos-hoy-lista">
         @for (evento of eventosFiltrados(); track evento.id) {
@@ -220,9 +165,16 @@
       <div class="mini-cal-grid">
         @for (dia of diasDelMes(); track $index) {
           @if (dia) {
-            <span class="mini-cal-dia" [class.hoy]="esHoy(dia)" [class.con-evento]="tieneEvento(dia)">
+            <button
+              type="button"
+              class="mini-cal-dia"
+              [class.hoy]="esHoy(dia)"
+              [class.con-evento]="tieneEvento(dia)"
+              [class.seleccionado]="esSeleccionado(dia)"
+              (click)="elegirDia(dia)"
+            >
               {{ dia.getDate() }}
-            </span>
+            </button>
           } @else {
             <span></span>
           }
@@ -231,7 +183,7 @@
       <div class="mini-cal-proximos">
         <div class="mini-cal-proximos-h">
           <span>Próximos eventos</span>
-          <a routerLink="/sesiones">Ver agenda →</a>
+          <button type="button" class="link-boton" (click)="elegirSegmento('todos')">Ver todos →</button>
         </div>
         @for (evento of (resumen()?.proximosEventos ?? []).slice(0, 3); track evento.id) {
           <div class="mini-cal-proximo-item">

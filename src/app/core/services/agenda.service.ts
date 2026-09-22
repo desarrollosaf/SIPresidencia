@@ -14,8 +14,6 @@ export interface EventoAgenda {
   ubicacion: string;
   tipo: string;
   tipoColor: 'primary' | 'brass' | 'favor' | 'acc4';
-  destacado: boolean;
-  imagenUrl: string | null;
 }
 
 export interface ResumenAgenda {
@@ -26,7 +24,6 @@ export interface ResumenAgenda {
     salonesDisponibles: number;
     eventosDestacados: number;
   };
-  eventoDestacado: EventoAgenda | null;
   eventosHoy: EventoAgenda[];
   proximosEventos: EventoAgenda[];
   diasConEventos: string[]; // ISO yyyy-mm-dd
@@ -107,8 +104,6 @@ function mapEvento(fecha: string, ev: EventoAgendaApi, indice: number): EventoAg
     ubicacion: ev.sede,
     tipo: categoria,
     tipoColor: colorDeCategoria(categoria),
-    destacado: false,
-    imagenUrl: null,
   };
 }
 
@@ -147,8 +142,6 @@ function construirResumen(resp: AgendaApiResponse): ResumenAgenda {
       a.fecha === b.fecha ? a.horaInicio.localeCompare(b.horaInicio) : a.fecha.localeCompare(b.fecha),
     );
 
-  const destacadoHoy = eventosHoy.find((e) => e.tipoColor === 'primary') ?? eventosHoy[0] ?? null;
-
   const salonesOcupados = resp.sedes.filter((sede) =>
     sede.agenda.some((a) => a.fecha_inicio === hoyIso),
   ).length;
@@ -165,7 +158,6 @@ function construirResumen(resp: AgendaApiResponse): ResumenAgenda {
       salonesDisponibles: resp.sedes.length,
       eventosDestacados: eventosDestacadosSemana,
     },
-    eventoDestacado: destacadoHoy ? { ...destacadoHoy, destacado: true } : null,
     eventosHoy,
     proximosEventos,
     diasConEventos: dias,
