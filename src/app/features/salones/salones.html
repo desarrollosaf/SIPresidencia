@@ -130,15 +130,17 @@
             <div class="timeline-row-track">
               @for (evento of eventosDelDia(salon); track evento.id) {
                 @let pos = posicionBarra(evento);
-                <div
+                <button
+                  type="button"
                   class="timeline-bar"
+                  [class.activa]="eventoSeleccionado()?.evento?.id === evento.id"
                   [style.left.%]="pos.left"
                   [style.width.%]="pos.width"
                   [style.background]="salon.color"
-                  [title]="evento.titulo + ' · ' + evento.horaInicio + (evento.horaFin ? ' - ' + evento.horaFin : '')"
+                  (click)="seleccionarEvento(evento, salon)"
                 >
                   {{ evento.titulo }} · {{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }
-                </div>
+                </button>
               }
               @if (posicionAhora(); as ahoraPct) {
                 <div class="timeline-ahora" [style.left.%]="ahoraPct"></div>
@@ -150,7 +152,22 @@
         }
       </div>
 
-      <p class="timeline-nota">Los horarios están en hora del centro de México (GMT-6).</p>
+      @if (eventoSeleccionado(); as sel) {
+        <div class="evento-detalle" [style.border-left-color]="sel.salonColor">
+          <div class="evento-detalle-texto">
+            <span class="evento-detalle-salon">{{ sel.salonNombre }}</span>
+            <strong>{{ sel.evento.titulo }}</strong>
+            <span class="evento-detalle-hora">{{ rangoHora(sel.evento) }} h</span>
+          </div>
+          <button type="button" class="evento-detalle-cerrar" (click)="cerrarEventoSeleccionado()" aria-label="Cerrar">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+      }
+
+      <p class="timeline-nota">Los horarios están en hora del centro de México (GMT-6). Toca un evento en la línea de tiempo para ver su descripción completa.</p>
     </div>
   } @else {
     <div class="card">

@@ -61,6 +61,11 @@ export class Salones implements OnInit, OnDestroy {
   protected readonly segmento = signal<Segmento>('hoy');
   protected readonly busqueda = signal('');
   protected readonly filtroSalonId = signal<number | 'todos'>('todos');
+  protected readonly eventoSeleccionado = signal<{
+    evento: EventoAgenda;
+    salonNombre: string;
+    salonColor: string;
+  } | null>(null);
 
   private temporizador?: ReturnType<typeof setInterval>;
 
@@ -134,6 +139,7 @@ export class Salones implements OnInit, OnDestroy {
 
   protected actualizarFecha(evento: Event): void {
     this.fecha.set((evento.target as HTMLInputElement).value);
+    this.eventoSeleccionado.set(null);
   }
 
   protected actualizarFiltroSalon(evento: Event): void {
@@ -147,6 +153,18 @@ export class Salones implements OnInit, OnDestroy {
 
   protected eventosDelDia(salon: SalonAgenda): EventoAgenda[] {
     return salon.eventos.filter((e) => e.fecha === this.fecha());
+  }
+
+  protected seleccionarEvento(evento: EventoAgenda, salon: SalonAgenda): void {
+    this.eventoSeleccionado.set({ evento, salonNombre: salon.nombre, salonColor: salon.color });
+  }
+
+  protected cerrarEventoSeleccionado(): void {
+    this.eventoSeleccionado.set(null);
+  }
+
+  protected rangoHora(evento: EventoAgenda): string {
+    return evento.horaFin ? `${evento.horaInicio} – ${evento.horaFin}` : evento.horaInicio;
   }
 
   protected posicionBarra(evento: EventoAgenda): { left: number; width: number } {
