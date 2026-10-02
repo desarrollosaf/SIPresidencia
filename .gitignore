@@ -39,6 +39,11 @@ testem.log
 /typings
 __screenshots__/
 
+# Puente Roland P-6 (trae el token)
+/p6-bridge/p6.env
+/p6-bridge/venv
+__pycache__/
+
 # System files
 .DS_Store
 Thumbs.db

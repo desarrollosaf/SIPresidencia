@@ -63,6 +63,21 @@ services:
 
     restart: unless-stopped
 
+  # Puente al Roland P-6. Solo arranca con: docker compose --profile p6 up -d
+  # Docker Desktop en Windows no ve el USB del P-6: aquí sirve en modo
+  # P6_DRY_RUN=1 para probar la cadena; en la Raspberry Pi descomenta devices.
+  p6-bridge:
+    build: ./p6-bridge
+    container_name: sipresidencia-p6-bridge
+    profiles: ["p6"]
+    env_file:
+      - ./p6-bridge/p6.env
+    # devices:
+    #   - /dev/snd:/dev/snd
+    depends_on:
+      - backend
+    restart: unless-stopped
+
   # Solo para desarrollo local: si ya tienes un MySQL propio, borra este
   # servicio y apunta DB_HOST en backend/.env a ese servidor.
   mysql:

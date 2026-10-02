@@ -1,0 +1,16 @@
+[Unit]
+Description=Roland P-6 Raspberry Pi Socket Bridge
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/p6-bridge
+EnvironmentFile=/opt/p6-bridge/p6.env
+ExecStart=/opt/p6-bridge/venv/bin/python /opt/p6-bridge/p6_bridge.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
