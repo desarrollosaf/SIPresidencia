@@ -1535,6 +1535,19 @@ button {
   gap: 14px;
   margin-bottom: 18px;
 }
+/* Con sidebar fija (>1000px) el contenido no alcanza para 4 tarjetas de 200px
+   hasta ~1300px: forzamos 2x2 para no dejar una tarjeta huérfana en su fila
+   (afecta todo el rango de iPad, incluida la 13" en vertical a 1032px). */
+@media (max-width: 1300px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1596,6 +1609,43 @@ button {
   font-size: 11.5px;
   color: var(--muted);
   margin-top: 1px;
+}
+
+.stat-card-accion {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s,
+    border-color 0.15s;
+}
+.stat-card-accion:hover:not(:disabled) {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+  border-color: var(--brass);
+}
+.stat-card-accion:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.stat-num-accion {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+@keyframes icono-pulso {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+.stat-icono.pulso {
+  animation: icono-pulso 0.7s ease-in-out infinite;
 }
 
 .agenda-grid {
@@ -1809,70 +1859,6 @@ button {
   font-weight: 550;
 }
 
-.modulos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-.modulo-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition:
-    box-shadow 0.15s,
-    transform 0.15s;
-}
-a.modulo-card:hover {
-  box-shadow: var(--shadow);
-  transform: translateY(-2px);
-}
-.modulo-card.proximamente {
-  opacity: 0.6;
-  cursor: default;
-}
-.modulo-icono {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  display: grid;
-  place-items: center;
-}
-.modulo-icono svg {
-  width: 22px;
-  height: 22px;
-}
-.modulo-icono.acc1 {
-  background: var(--acc1-soft);
-  color: var(--acc1);
-}
-.modulo-icono.acc2 {
-  background: var(--acc2-soft);
-  color: var(--acc2);
-}
-.modulo-icono.acc3 {
-  background: var(--acc3-soft);
-  color: var(--acc3);
-}
-.modulo-icono.acc4 {
-  background: var(--acc4-soft);
-  color: var(--acc4);
-}
-.modulo-card h3 {
-  font-size: 15px;
-}
-.modulo-card p {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-
 /* ---------- Login ---------- */
 .login-shell {
   min-height: 100vh;
@@ -1982,16 +1968,32 @@ a.modulo-card:hover {
   display: flex;
   margin-bottom: 8px;
 }
+.timeline-scale-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  background: var(--surface);
+}
 .timeline-scale-horas {
+  position: relative;
   flex: 1;
-  display: flex;
   min-width: 780px;
+  height: 14px;
 }
 .timeline-scale-horas span {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
   font-size: 10.5px;
   color: var(--muted);
   white-space: nowrap;
+}
+.timeline-scale-horas span:first-child {
+  transform: none;
+}
+.timeline-scale-horas span:last-child {
+  transform: translateX(-100%);
 }
 .timeline-row {
   display: flex;
@@ -2000,6 +2002,9 @@ a.modulo-card:hover {
   border-top: 1px solid var(--line-2);
 }
 .timeline-row-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
   width: 168px;
   flex: none;
   display: flex;
@@ -2008,6 +2013,8 @@ a.modulo-card:hover {
   font-size: 12.5px;
   color: var(--ink-2);
   padding-right: 10px;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--line-2);
 }
 .timeline-row-label .dot {
   flex: none;

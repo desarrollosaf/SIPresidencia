@@ -39,6 +39,9 @@ testem.log
 /typings
 __screenshots__/
 
+# Backend: trae contraseñas y secretos reales (DB, JWT, token del P-6)
+/backend/.env
+
 # Puente Roland P-6 (trae el token)
 /p6-bridge/p6.env
 /p6-bridge/venv

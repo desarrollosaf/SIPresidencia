@@ -1,44 +1,18 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { AgendaService, ResumenAgenda } from '../../core/services/agenda.service';
+import { P6Service } from '../../core/services/p6.service';
 import { ToastService } from '../../core/services/toast.service';
-
-interface Modulo {
-  nombre: string;
-  descripcion: string;
-  icono: string;
-  color: 'acc1' | 'acc2' | 'acc3' | 'acc4';
-  ruta?: string;
-  proximamente?: boolean;
-}
-
-const MODULOS: Modulo[] = [
-  {
-    nombre: 'Sesiones',
-    descripcion: 'Orden del día, video de cada punto y votos.',
-    icono: 'sesiones',
-    color: 'acc1',
-    ruta: '/sesiones',
-  },
-  {
-    nombre: 'Presupuesto',
-    descripcion: 'Próximamente.',
-    icono: 'presupuesto',
-    color: 'acc2',
-    proximamente: true,
-  },
-];
+import { environment } from '../../../environments/environment';
 
 type Segmento = 'hoy' | 'semana' | 'todos';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
   templateUrl: './home.html',
 })
 export class Home implements OnInit, OnDestroy {
-  protected readonly modulos = MODULOS;
   protected readonly ahora = signal(new Date());
   private temporizador?: ReturnType<typeof setInterval>;
 
@@ -49,6 +23,7 @@ export class Home implements OnInit, OnDestroy {
   protected readonly busqueda = signal('');
   protected readonly mesVisible = signal(this.iniciarMes(new Date()));
   protected readonly diaSeleccionado = signal<string | null>(null);
+  protected readonly enviandoSonido = signal(false);
 
   protected readonly eventosFiltrados = computed(() => {
     const resumen = this.resumen();
@@ -78,6 +53,7 @@ export class Home implements OnInit, OnDestroy {
   constructor(
     protected readonly authService: AuthService,
     private readonly agendaService: AgendaService,
+    private readonly p6Service: P6Service,
     private readonly toastService: ToastService,
   ) {}
 
@@ -131,6 +107,24 @@ export class Home implements OnInit, OnDestroy {
     return new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' })
       .format(fecha)
       .replace('.', '');
+  }
+
+  protected tocarSonido(): void {
+    if (this.enviandoSonido()) return;
+    this.enviandoSonido.set(true);
+    const { bank, pad } = environment.p6Pad;
+
+    this.p6Service.dispararPad(bank, pad).subscribe({
+      next: () => {
+        this.enviandoSonido.set(false);
+        this.toastService.success(`Notificación enviada al congreso.`);
+      },
+      error: (error: unknown) => {
+        this.enviandoSonido.set(false);
+        const detalle = error instanceof HttpErrorResponse ? error.error?.message : null;
+        this.toastService.error(detalle || 'No se pudo enviar el sonido al P-6.');
+      },
+    });
   }
 
   protected actualizarBusqueda(evento: Event): void {

@@ -115,8 +115,8 @@
         <div class="timeline-scale">
           <div class="timeline-scale-label" style="width: 168px"></div>
           <div class="timeline-scale-horas">
-            @for (h of horasEscala; track h) {
-              <span>{{ h }}</span>
+            @for (h of horasEscala; track h; let i = $index) {
+              <span [style.left.%]="(i / (horasEscala.length - 1)) * 100">{{ h }}</span>
             }
           </div>
         </div>

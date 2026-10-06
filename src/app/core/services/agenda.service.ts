@@ -22,7 +22,6 @@ export interface ResumenAgenda {
     proximosEventos: number;
     salonesOcupados: number;
     salonesDisponibles: number;
-    eventosDestacados: number;
   };
   eventosHoy: EventoAgenda[];
   proximosEventos: EventoAgenda[];
@@ -146,17 +145,12 @@ function construirResumen(resp: AgendaApiResponse): ResumenAgenda {
     sede.agenda.some((a) => a.fecha_inicio === hoyIso),
   ).length;
 
-  const eventosDestacadosSemana = todosLosEventos.filter(
-    (e) => e.tipoColor === 'primary' && e.fecha >= hoyIso && e.fecha <= limiteSemanaIso,
-  ).length;
-
   return {
     totales: {
       eventosHoy: eventosHoy.length,
       proximosEventos: proximosEventos.filter((e) => e.fecha <= limiteSemanaIso).length,
       salonesOcupados,
       salonesDisponibles: resp.sedes.length,
-      eventosDestacados: eventosDestacadosSemana,
     },
     eventosHoy,
     proximosEventos,
