@@ -9,7 +9,6 @@ de la web sabe si el P-6 sonó o por qué falló.
 import asyncio
 import logging
 import os
-from typing import Optional
 
 import mido
 import socketio
@@ -30,7 +29,6 @@ logging.basicConfig(
 log = logging.getLogger("p6-bridge")
 
 sio = socketio.AsyncClient(reconnection=True, logger=False, engineio_logger=False)
-midi_out: Optional[mido.ports.BaseOutput] = None
 
 
 class DryRunOutput:
@@ -48,20 +46,19 @@ def list_midi_outputs():
         return []
 
 
-def open_p6():
-    global midi_out
+def abrir_puerto_p6():
+    """Abre un puerto MIDI nuevo hacia el P-6 (o un DryRunOutput si no hay equipo)."""
     names = list_midi_outputs()
     log.info("MIDI outputs encontrados: %s", names)
 
     match = next((name for name in names if DEVICE_MATCH.lower() in name.lower()), None)
     if match:
-        midi_out = mido.open_output(match)
+        puerto = mido.open_output(match)
         log.info("Roland P-6 abierto en: %s", match)
-        return
+        return puerto
     if DRY_RUN:
-        midi_out = DryRunOutput()
         log.warning("P6_DRY_RUN activo: no hay '%s', solo se registrarán los mensajes.", DEVICE_MATCH)
-        return
+        return DryRunOutput()
     raise RuntimeError(
         f"No encontré un puerto MIDI que contenga '{DEVICE_MATCH}'. "
         f"Puertos disponibles: {names}"
@@ -69,19 +66,25 @@ def open_p6():
 
 
 def midi_send(msg: mido.Message):
-    """Envía y, si el P-6 se desconectó, cierra el puerto para reabrirlo en el siguiente intento."""
-    global midi_out
-    if midi_out is None:
-        open_p6()
+    """Abre el puerto del P-6, manda el mensaje y lo cierra enseguida.
+
+    Al apagar y prender el P-6, ALSA a veces le reasigna el MISMO número de
+    cliente que ya tenía (no siempre cambia), así que comparar nombres contra
+    un puerto que dejamos abierto no basta para detectar que ya no sirve.
+    Abrir y cerrar en cada envío es un poco más lento (milisegundos, nada que
+    importe para un botón que aprieta una persona), pero siempre usa el
+    estado real de ALSA en ese momento, así que nunca se queda con un puerto
+    fantasma apuntando a un P-6 que ya no está ahí.
+    """
+    puerto = abrir_puerto_p6()
     try:
-        midi_out.send(msg)
-    except Exception:
-        try:
-            midi_out.close()
-        except Exception:
-            pass
-        midi_out = None
-        raise
+        puerto.send(msg)
+    finally:
+        if not isinstance(puerto, DryRunOutput):
+            try:
+                puerto.close()
+            except Exception:
+                pass
 
 
 def send_note(note: int, velocity: int = 100, channel: int = DEFAULT_CHANNEL, duration_ms: int = 80):
@@ -214,10 +217,12 @@ async def main():
     if not TOKEN:
         log.warning("P6_TOKEN vacío: el backend rechazará la conexión.")
 
-    try:
-        open_p6()
-    except Exception as exc:
-        log.warning("P-6 aún no disponible (se reintenta al recibir un evento): %s", exc)
+    nombres = list_midi_outputs()
+    if not any(DEVICE_MATCH.lower() in n.lower() for n in nombres) and not DRY_RUN:
+        log.warning(
+            "P-6 aún no disponible al arrancar (se reintenta con cada evento). Puertos: %s",
+            nombres,
+        )
 
     while True:
         try:

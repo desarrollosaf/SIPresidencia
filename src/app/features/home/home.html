@@ -50,6 +50,34 @@
 </div>
 
 <div class="stats-grid">
+  <button
+    type="button"
+    class="stat-card stat-card-accion"
+    [disabled]="enviandoSonido()"
+    (click)="tocarSonido()"
+  >
+    <div class="stat-icono brass" [class.pulso]="enviandoSonido()">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path
+          d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-num stat-num-accion">{{ enviandoSonido() ? 'Enviando…' : 'Notificar al congreso' }}</div>
+      <div class="stat-sub">Toca para enviar el aviso sonoro</div>
+    </div>
+  </button>
+
   <div class="stat-card">
     <div class="stat-icono acc1">
       <svg viewBox="0 0 24 24" fill="none">
@@ -93,34 +121,6 @@
       <div class="stat-sub">De {{ resumen()?.totales.salonesDisponibles ?? 0 }} disponibles</div>
     </div>
   </div>
-
-  <button
-    type="button"
-    class="stat-card stat-card-accion"
-    [disabled]="enviandoSonido()"
-    (click)="tocarSonido()"
-  >
-    <div class="stat-icono brass" [class.pulso]="enviandoSonido()">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path
-          d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4Z"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-        />
-      </svg>
-    </div>
-    <div>
-      <div class="stat-num stat-num-accion">{{ enviandoSonido() ? 'Enviando…' : 'Notificar al congreso' }}</div>
-      <div class="stat-sub">Toca para enviar el aviso sonoro</div>
-    </div>
-  </button>
 </div>
 
 @if (cargandoAgenda()) {
