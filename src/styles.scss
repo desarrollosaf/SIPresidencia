@@ -43,6 +43,16 @@ html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
+}
+/* Angular envuelve cada componente en un elemento personalizado (<app-root>,
+   <app-login>, etc.); sin esto son inline por spec y pueden romper el alto
+   de los hijos que dependen de 100%/100vh en algunos navegadores/zooms. */
+app-root,
+app-login,
+app-shell {
+  display: block;
+  min-height: 100%;
 }
 body {
   background: var(--canvas);
@@ -1861,18 +1871,35 @@ button {
 
 /* ---------- Login ---------- */
 .login-shell {
+  position: relative;
+  min-height: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
-  background: linear-gradient(160deg, var(--primary-900), var(--primary-700));
   padding: 24px;
+  overflow: hidden;
+  background: var(--primary-900);
+}
+.login-bg-nitida {
+  position: absolute;
+  inset: 0;
+  background: url('/congreso_fondo.jpg') center / cover no-repeat;
+}
+.login-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 8, 6, 0.05) 0%, rgba(10, 8, 6, 0.35) 100%);
 }
 .login-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 380px;
   background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
   padding: 32px;
 }
 .login-card .seal {
@@ -1887,6 +1914,25 @@ button {
   color: var(--muted);
   font-size: 13px;
   margin: 6px 0 24px;
+}
+@media (max-width: 560px) {
+  .login-shell {
+    padding: 16px;
+  }
+}
+
+/* Fotos recortadas a propósito para cada tipo de pantalla (en vez de
+   recortar/difuminar la misma foto de escritorio): ya vienen encuadradas
+   en vertical con el logo visible, así que basta con "cover". */
+@media (max-width: 1100px) {
+  .login-bg-nitida {
+    background: url('/congreso_fondo_tablet.jpg') center top / cover no-repeat;
+  }
+}
+@media (max-width: 600px) {
+  .login-bg-nitida {
+    background: url('/congreso_fondo_celular.jpg') center top / cover no-repeat;
+  }
 }
 
 @media (max-width: 1000px) {
