@@ -5,12 +5,14 @@ import databaseConfig from './config/database.config';
 import authConfig from './config/auth.config';
 import registroConfig from './config/registro.config';
 import p6Config from './config/p6.config';
+import spidConfig from './config/spid.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { RegistroParlamentarioModule } from './registro-parlamentario/registro-parlamentario.module';
 import { SesionesModule } from './sesiones/sesiones.module';
 import { P6Module } from './p6/p6.module';
+import { SpidModule } from './spid/spid.module';
 
 interface MysqlConnectionConfig {
   host: string;
@@ -24,7 +26,7 @@ interface MysqlConnectionConfig {
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, authConfig, registroConfig, p6Config],
+      load: [databaseConfig, authConfig, registroConfig, p6Config, spidConfig],
     }),
     SequelizeModule.forRootAsync({
       inject: [ConfigService],
@@ -43,6 +45,7 @@ interface MysqlConnectionConfig {
     RegistroParlamentarioModule,
     SesionesModule,
     P6Module,
+    SpidModule,
   ],
   controllers: [AppController],
   providers: [AppService],

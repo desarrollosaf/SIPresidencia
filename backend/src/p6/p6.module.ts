@@ -7,5 +7,7 @@ import { P6Gateway } from './p6.gateway';
   imports: [JwtAuthModule],
   controllers: [P6Controller],
   providers: [P6Gateway],
+  // Lo usa también el módulo spid (botón de la app SPID)
+  exports: [P6Gateway],
 })
 export class P6Module {}
