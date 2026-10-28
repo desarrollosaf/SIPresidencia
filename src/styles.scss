@@ -2232,3 +2232,230 @@ button {
     flex: 1 1 160px;
   }
 }
+
+/* ---------- Notificar (avisos por Pushover) ---------- */
+.avisos-head {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.avisos-head-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.avisos-mensaje {
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.avisos-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.avisos-stats {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 720px) {
+  .avisos-stats {
+    grid-template-columns: 1fr;
+  }
+}
+.avisos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+.avisos-vacio {
+  grid-column: 1 / -1;
+}
+.aviso-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 26px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s,
+    border-color 0.2s;
+}
+.aviso-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+.aviso-card.sonando {
+  border-color: #f0c4be;
+  background: linear-gradient(180deg, #fff6f5, var(--surface) 55%);
+}
+.aviso-card.visto {
+  border-color: #bfe0d3;
+}
+.aviso-card.pausado {
+  opacity: 0.6;
+}
+.aviso-card-admin {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.aviso-card:hover .aviso-card-admin,
+.aviso-card:focus-within .aviso-card-admin {
+  opacity: 1;
+}
+@media (hover: none) {
+  .aviso-card-admin {
+    opacity: 1;
+  }
+}
+.aviso-card-admin button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+.aviso-card-admin button:hover {
+  background: var(--line-2);
+  color: var(--ink);
+}
+.aviso-card-admin svg {
+  width: 15px;
+  height: 15px;
+}
+.aviso-avatar {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  font-family: 'Spectral', serif;
+  font-size: 27px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(31, 36, 48, 0.15);
+}
+.aviso-avatar span {
+  position: relative;
+  z-index: 1;
+}
+.aviso-avatar.tono-primary {
+  background: linear-gradient(150deg, var(--primary), var(--primary-700));
+}
+.aviso-avatar.tono-acc1 {
+  background: linear-gradient(150deg, #e64980, var(--acc1));
+}
+.aviso-avatar.tono-acc2 {
+  background: linear-gradient(150deg, #4dabf7, var(--acc2));
+}
+.aviso-avatar.tono-acc3 {
+  background: linear-gradient(150deg, #20c997, var(--acc3));
+}
+.aviso-avatar.tono-acc4 {
+  background: linear-gradient(150deg, #a66ce0, var(--acc4));
+}
+.aviso-avatar.tono-brass {
+  background: linear-gradient(150deg, #d2a85a, var(--brass));
+}
+@keyframes aviso-onda {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+.aviso-avatar .onda {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--live);
+  animation: aviso-onda 1.6s ease-out infinite;
+}
+.aviso-avatar .onda.d2 {
+  animation-delay: 0.8s;
+}
+.aviso-check {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--favor);
+  color: #fff;
+  border: 3px solid var(--surface);
+  display: grid;
+  place-items: center;
+}
+.aviso-check svg {
+  width: 12px;
+  height: 12px;
+}
+.aviso-nombre {
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.aviso-puesto {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.aviso-estado {
+  margin: 12px 0 16px;
+  min-height: 24px;
+}
+@keyframes aviso-parpadeo {
+  50% {
+    opacity: 0.3;
+  }
+}
+.aviso-pill-sonando {
+  background: #fbe4e1;
+  color: var(--contra);
+}
+.aviso-pill-sonando .dot {
+  background: var(--live);
+  animation: aviso-parpadeo 1s ease-in-out infinite;
+}
+.aviso-pill-visto {
+  background: #e3f3ec;
+  color: var(--favor);
+}
+.aviso-boton {
+  width: 100%;
+  justify-content: center;
+  padding: 11px 16px;
+  font-size: 14px;
+  border-radius: 10px;
+  margin-top: auto;
+}
+.modal-aviso {
+  max-width: 480px;
+}
+.modal-aviso .field {
+  margin-bottom: 0;
+}
+.modal-aviso .form-actions {
+  margin-top: 6px;
+}

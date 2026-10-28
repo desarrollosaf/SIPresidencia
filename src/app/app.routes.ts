@@ -26,6 +26,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/salones/salones.routes').then((m) => m.SALONES_ROUTES),
       },
+      {
+        path: 'notificar',
+        loadChildren: () =>
+          import('./features/notificar/notificar.routes').then((m) => m.NOTIFICAR_ROUTES),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

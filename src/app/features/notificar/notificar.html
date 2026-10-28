@@ -1,0 +1,404 @@
+<div class="pagehead pagehead-top avisos-head">
+  <div>
+    <div class="eyebrow">SIPresidencia · Notificar</div>
+    <h1>Notificar al equipo</h1>
+    <p>
+      Toca a una persona y su teléfono vibrará y sonará, aunque esté en silencio, hasta que vea el
+      aviso.
+    </p>
+  </div>
+  <div class="avisos-head-acciones">
+    @if (esAdmin()) {
+      <button type="button" class="btn line" (click)="abrirNuevo()">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <path
+            d="M12 5v14M5 12h14"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        Agregar persona
+      </button>
+    }
+    @if (totales().sonando > 0) {
+      <button type="button" class="btn line" (click)="detener()">
+        <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+          <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+        </svg>
+        Detener todas
+      </button>
+    }
+    <button type="button" class="btn" [disabled]="!activos().length" (click)="notificarTodos()">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+        <path
+          d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10 18a2 2 0 0 0 4 0"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+        />
+      </svg>
+      Notificar a todos
+    </button>
+  </div>
+</div>
+
+<div class="card avisos-mensaje">
+  <div class="input-icon">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path
+        d="M4 5h16v11H8l-4 4V5Z"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linejoin="round"
+      />
+    </svg>
+    <input
+      class="input"
+      maxlength="200"
+      placeholder="Mensaje (opcional): ¿para qué lo buscas?"
+      [value]="mensaje()"
+      (input)="actualizarMensaje($event)"
+    />
+  </div>
+  <div class="avisos-chips">
+    @for (texto of mensajesRapidos; track texto) {
+      <button
+        type="button"
+        class="filtro-pill"
+        [class.active]="mensaje() === texto"
+        (click)="usarMensajeRapido(texto)"
+      >
+        {{ texto }}
+      </button>
+    }
+  </div>
+</div>
+
+<div class="stats-grid avisos-stats">
+  <div class="stat-card">
+    <div class="stat-icono">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" />
+        <circle cx="16" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.7" />
+        <path
+          d="M3 19c.5-3.3 2.7-5 6-5s5.5 1.7 6 5"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+        <path
+          d="M14.5 14.3c2.6.3 4 1.8 4.4 4.7"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-num">{{ totales().equipo }}</div>
+      <div class="stat-label">En el equipo</div>
+      <div class="stat-sub">Personas que puedes avisar</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icono contra" [class.pulso]="totales().sonando > 0">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path
+          d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M10 18a2 2 0 0 0 4 0"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+        />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-num">{{ totales().sonando }}</div>
+      <div class="stat-label">Sonando ahora</div>
+      <div class="stat-sub">Esperando que lo vean</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icono acc3">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+    <div>
+      <div class="stat-num">{{ totales().vistos }}</div>
+      <div class="stat-label">Ya lo vieron</div>
+      <div class="stat-sub">Confirmaron el aviso</div>
+    </div>
+  </div>
+</div>
+
+@if (cargando()) {
+  <p class="empty">Cargando equipo…</p>
+} @else {
+  <div class="avisos-grid">
+    @for (c of contactos(); track c.id; let i = $index) {
+      @let est = estadoDe(c);
+      <div
+        class="aviso-card"
+        [class.sonando]="est?.estado === 'sonando'"
+        [class.visto]="est?.estado === 'visto'"
+        [class.pausado]="!c.activo"
+      >
+        @if (esAdmin()) {
+          <div class="aviso-card-admin">
+            <button type="button" title="Editar" (click)="abrirEditar(c)">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 20h4L19 9l-4-4L4 16v4Z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button type="button" title="Quitar" (click)="pedirEliminar(c)">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        }
+
+        <div class="aviso-avatar" [class]="'tono-' + tono(i)">
+          <span>{{ iniciales(c.nombre) }}</span>
+          @if (est?.estado === 'sonando') {
+            <i class="onda"></i><i class="onda d2"></i>
+          }
+          @if (est?.estado === 'visto') {
+            <b class="aviso-check">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12.5l4.5 4.5L19 7.5"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </b>
+          }
+        </div>
+
+        <h3 class="aviso-nombre">{{ c.nombre }}</h3>
+        <div class="aviso-puesto">{{ c.puesto || 'Equipo de Presidencia' }}</div>
+
+        <div class="aviso-estado">
+          @if (!c.activo) {
+            <span class="pill gray">Pausado</span>
+          } @else {
+            @switch (est?.estado) {
+              @case ('sonando') {
+                <span class="pill aviso-pill-sonando"
+                  ><span class="dot"></span>Sonando · {{ hace(est!.enviadoEn) }}</span
+                >
+              }
+              @case ('visto') {
+                <span class="pill aviso-pill-visto">✓ Lo vio a las {{ hora(est!.vistoEn!) }}</span>
+              }
+              @case ('expirado') {
+                <span class="pill brass">No lo vio · {{ hace(est!.enviadoEn) }}</span>
+              }
+              @case ('cancelado') {
+                <span class="pill gray">Alerta detenida</span>
+              }
+              @default {
+                <span class="pill gray">Disponible</span>
+              }
+            }
+          }
+        </div>
+
+        @if (est?.estado === 'sonando') {
+          <button type="button" class="btn line aviso-boton" (click)="detener(c)">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+            </svg>
+            Detener
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn aviso-boton"
+            [disabled]="!c.activo || estaEnviando(c)"
+            (click)="notificar(c)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" width="17" height="17">
+              <path
+                d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M10 18a2 2 0 0 0 4 0"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+              />
+            </svg>
+            {{ estaEnviando(c) ? 'Enviando…' : 'Notificar' }}
+          </button>
+        }
+      </div>
+    } @empty {
+      <div class="card avisos-vacio">
+        <p class="empty">
+          Todavía no hay nadie en el equipo.
+          @if (esAdmin()) {
+            <br />Usa <b>Agregar persona</b> con el User Key que le da la app de Pushover.
+          } @else {
+            <br />Pide a un administrador que agregue a las personas.
+          }
+        </p>
+      </div>
+    }
+  </div>
+}
+
+@if (formAbierto()) {
+  <div class="modal-backdrop" (click)="cerrarForm()">
+    <form
+      class="modal-evento modal-aviso"
+      (click)="$event.stopPropagation()"
+      (submit)="guardar($event)"
+    >
+      <div class="modal-evento-barra" style="background: var(--primary)"></div>
+      <button type="button" class="modal-evento-cerrar" (click)="cerrarForm()" aria-label="Cerrar">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 6l12 12M18 6 6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <div class="modal-evento-cuerpo">
+        <h3>{{ editando() ? 'Editar persona' : 'Agregar persona' }}</h3>
+        <p>
+          La persona instala <b>Pushover</b> en su iPhone, acepta las <b>alertas críticas</b> y te
+          pasa su User Key.
+        </p>
+
+        <div class="field">
+          <label for="av-nombre">Nombre</label>
+          <input
+            id="av-nombre"
+            class="input"
+            required
+            maxlength="120"
+            [value]="form().nombre"
+            (input)="campo('nombre', $event)"
+          />
+        </div>
+        <div class="field">
+          <label for="av-puesto">Puesto <span class="hint">(opcional)</span></label>
+          <input
+            id="av-puesto"
+            class="input"
+            maxlength="120"
+            placeholder="Ej. Secretaria particular"
+            [value]="form().puesto ?? ''"
+            (input)="campo('puesto', $event)"
+          />
+        </div>
+        <div class="field">
+          <label for="av-user">User Key de Pushover</label>
+          <input
+            id="av-user"
+            class="input tnum"
+            required
+            pattern="[A-Za-z0-9]{30}"
+            maxlength="30"
+            autocomplete="off"
+            placeholder="u8trfzuk3uoohqbedvjkb3q1uu47yi"
+            [value]="form().pushoverUser"
+            (input)="campo('pushoverUser', $event)"
+          />
+          <span class="hint">Se valida con Pushover al guardar.</span>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="av-device">Dispositivo <span class="hint">(opcional)</span></label>
+            <input
+              id="av-device"
+              class="input"
+              maxlength="100"
+              placeholder="Todos"
+              [value]="form().pushoverDevice ?? ''"
+              (input)="campo('pushoverDevice', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="av-sonido">Sonido</label>
+            <select id="av-sonido" class="select" (change)="campo('sonido', $event)">
+              @for (s of sonidos; track s.valor) {
+                <option [value]="s.valor" [selected]="(form().sonido ?? '') === s.valor">
+                  {{ s.etiqueta }}
+                </option>
+              }
+            </select>
+          </div>
+        </div>
+        @if (editando()) {
+          <label class="checkbox-row">
+            <input type="checkbox" [checked]="form().activo" (change)="campo('activo', $event)" />
+            Activo (si lo desmarcas, no se le podrá notificar)
+          </label>
+        }
+
+        <div class="form-actions">
+          <button type="submit" class="btn" [disabled]="guardando()">
+            {{ guardando() ? 'Validando…' : 'Guardar' }}
+          </button>
+          <button type="button" class="btn line" (click)="cerrarForm()">Cancelar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+}
+
+@if (porEliminar(); as c) {
+  <div class="modal-backdrop" (click)="porEliminar.set(null)">
+    <div class="modal-evento modal-aviso" (click)="$event.stopPropagation()">
+      <div class="modal-evento-barra" style="background: var(--contra)"></div>
+      <div class="modal-evento-cuerpo">
+        <h3>¿Quitar a {{ c.nombre }}?</h3>
+        <p>Ya no aparecerá en esta vista. Su cuenta de Pushover no se borra.</p>
+        <div class="form-actions">
+          <button type="button" class="btn danger" (click)="confirmarEliminar()">Quitar</button>
+          <button type="button" class="btn line" (click)="porEliminar.set(null)">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
