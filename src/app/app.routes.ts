@@ -27,10 +27,15 @@ export const routes: Routes = [
           import('./features/salones/salones.routes').then((m) => m.SALONES_ROUTES),
       },
       {
-        path: 'notificar',
-        loadChildren: () =>
-          import('./features/notificar/notificar.routes').then((m) => m.NOTIFICAR_ROUTES),
+        path: 'llamar',
+        loadChildren: () => import('./features/llamar/llamar.routes').then((m) => m.LLAMAR_ROUTES),
       },
+      {
+        path: 'equipo',
+        loadChildren: () => import('./features/equipo/equipo.routes').then((m) => m.EQUIPO_ROUTES),
+      },
+      // Dirección anterior de la vista; quien la tenga guardada llega a "Llamar".
+      { path: 'notificar', redirectTo: 'llamar' },
     ],
   },
   { path: '**', redirectTo: '' },

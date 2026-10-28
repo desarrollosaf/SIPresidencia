@@ -6,14 +6,15 @@ import { ToastContainer } from '../../shared/toast/toast-container';
 interface NavItem {
   label: string;
   route: string;
-  icono: 'inicio' | 'sesiones' | 'salones' | 'notificar';
+  icono: 'inicio' | 'sesiones' | 'salones' | 'llamar' | 'equipo';
 }
 
 const NAV: NavItem[] = [
   { label: 'Inicio', route: '/home', icono: 'inicio' },
   { label: 'Sesiones', route: '/sesiones', icono: 'sesiones' },
   { label: 'Salones', route: '/salones', icono: 'salones' },
-  { label: 'Notificar', route: '/notificar', icono: 'notificar' },
+  { label: 'Llamar', route: '/llamar', icono: 'llamar' },
+  { label: 'Equipo de trabajo', route: '/equipo', icono: 'equipo' },
 ];
 
 @Component({

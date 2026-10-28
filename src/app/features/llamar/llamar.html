@@ -1,0 +1,103 @@
+<div class="llamar">
+  <header class="llamar-head">
+    <div>
+      <h1>Llamar</h1>
+      <p>Toca a una persona y su teléfono sonará hasta que lo vea.</p>
+    </div>
+    <div class="llamar-acciones">
+      @if (totales().sonando > 0) {
+        <button type="button" class="llamar-boton" (click)="detener()">Detener todas</button>
+      }
+      @if (activos().length > 1) {
+        <button type="button" class="llamar-boton primario" (click)="notificarTodos()">
+          Llamar a todos
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="llamar-mensajes" role="group" aria-label="Mensaje">
+    @for (texto of mensajesRapidos; track texto) {
+      <button
+        type="button"
+        class="llamar-chip"
+        [class.activo]="mensaje() === texto"
+        [attr.aria-pressed]="mensaje() === texto"
+        (click)="usarMensajeRapido(texto)"
+      >
+        {{ texto }}
+      </button>
+    }
+  </div>
+
+  @if (cargando()) {
+    <p class="empty">Cargando…</p>
+  } @else {
+    <div class="llamar-grid">
+      @for (c of activos(); track c.id; let i = $index) {
+        @let est = estadoDe(c);
+        <div
+          class="llamar-card"
+          [class.sonando]="est?.estado === 'sonando'"
+          [class.visto]="est?.estado === 'visto'"
+        >
+          <button
+            type="button"
+            class="llamar-tap"
+            [disabled]="estaEnviando(c) || est?.estado === 'sonando'"
+            [attr.aria-label]="'Llamar a ' + c.nombre"
+            (click)="notificar(c)"
+          >
+            <span class="aviso-avatar llamar-avatar" [class]="'tono-' + tono(i)">
+              <span>{{ iniciales(c.nombre) }}</span>
+              @if (est?.estado === 'sonando') {
+                <i class="onda"></i><i class="onda d2"></i>
+              }
+              @if (est?.estado === 'visto') {
+                <b class="aviso-check">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </b>
+              }
+            </span>
+            <span class="llamar-nombre">{{ c.nombre }}</span>
+            <span class="llamar-estado">
+              @if (estaEnviando(c)) {
+                Llamando…
+              } @else {
+                @switch (est?.estado) {
+                  @case ('sonando') {
+                    Sonando · {{ hace(est!.enviadoEn) }}
+                  }
+                  @case ('visto') {
+                    Lo vio a las {{ hora(est!.vistoEn!) }}
+                  }
+                  @case ('expirado') {
+                    No lo vio
+                  }
+                  @default {
+                    {{ c.puesto || 'Toca para llamar' }}
+                  }
+                }
+              }
+            </span>
+          </button>
+          @if (est?.estado === 'sonando') {
+            <button type="button" class="llamar-detener" (click)="detener(c)">Detener</button>
+          }
+        </div>
+      } @empty {
+        <p class="empty llamar-vacio">
+          Aún no hay personas. Agrégalas desde <b>Equipo de trabajo</b>.
+        </p>
+      }
+    </div>
+  }
+</div>

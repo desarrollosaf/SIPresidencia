@@ -2491,3 +2491,214 @@ button {
   text-align: center;
   padding-bottom: 24px;
 }
+
+/* ---------- Llamar (vista minimalista para tableta) ---------- */
+.llamar {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.llamar-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.llamar-head h1 {
+  font-size: 34px;
+  color: var(--ink);
+}
+.llamar-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14.5px;
+}
+.llamar-acciones {
+  display: flex;
+  gap: 10px;
+}
+.llamar-boton {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  min-height: 44px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.llamar-boton:hover {
+  border-color: var(--primary-soft);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.llamar-boton.primario {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.llamar-boton.primario:hover {
+  background: var(--primary-700);
+}
+.llamar-mensajes {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 22px;
+  scrollbar-width: none;
+}
+.llamar-mensajes::-webkit-scrollbar {
+  display: none;
+}
+.llamar-chip {
+  flex: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: 999px;
+  min-height: 40px;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+.llamar-chip.activo {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #fff;
+}
+.llamar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+}
+.llamar-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 22px;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+}
+.llamar-card:hover {
+  box-shadow: var(--shadow);
+}
+.llamar-card.sonando {
+  border-color: #f3cdc8;
+  background: #fff7f6;
+}
+.llamar-card.visto {
+  border-color: #cfe8dd;
+}
+.llamar-tap {
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 30px 18px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-radius: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s;
+}
+.llamar-tap:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.llamar-tap:disabled {
+  cursor: default;
+}
+.llamar-avatar {
+  width: 104px;
+  height: 104px;
+  font-size: 36px;
+  margin-bottom: 14px;
+}
+.llamar-avatar .aviso-check {
+  width: 32px;
+  height: 32px;
+}
+.llamar-avatar .aviso-check svg {
+  width: 15px;
+  height: 15px;
+}
+.llamar-nombre {
+  font-family: 'Spectral', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.llamar-estado {
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 20px;
+}
+.llamar-card.sonando .llamar-estado {
+  color: var(--contra);
+  font-weight: 600;
+}
+.llamar-card.visto .llamar-estado {
+  color: var(--favor);
+  font-weight: 600;
+}
+.llamar-detener {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: var(--surface);
+  color: var(--contra);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+.llamar-vacio {
+  grid-column: 1 / -1;
+}
+/* Tableta: tarjetas más grandes para tocarlas con el dedo. */
+@media (min-width: 700px) and (max-width: 1100px) {
+  .llamar-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+@media (min-width: 700px) and (max-width: 860px) and (orientation: portrait) {
+  .llamar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .llamar-head h1 {
+    font-size: 28px;
+  }
+  .llamar-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .llamar-tap {
+    padding: 22px 10px 18px;
+  }
+  .llamar-avatar {
+    width: 76px;
+    height: 76px;
+    font-size: 27px;
+  }
+  .llamar-nombre {
+    font-size: 17px;
+  }
+}
