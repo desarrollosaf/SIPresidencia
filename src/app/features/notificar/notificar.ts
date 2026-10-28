@@ -1,7 +1,14 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  computed,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
 import {
   AvisosService,
   ContactoAviso,
@@ -59,14 +66,20 @@ export class Notificar implements OnInit, OnDestroy {
   protected readonly enviando = signal<Set<number>>(new Set());
   protected readonly ahora = signal(Date.now());
 
-  // Formulario de alta / edición (solo administrador)
+  // Formulario de alta / edición
   protected readonly formAbierto = signal(false);
   protected readonly editando = signal<ContactoAviso | null>(null);
   protected readonly form = signal<ContactoForm>({ nombre: '', pushoverUser: '' });
   protected readonly guardando = signal(false);
   protected readonly porEliminar = signal<ContactoAviso | null>(null);
+  // Nombres dados de alta sin cerrar el formulario ("Guardar y agregar otra").
+  protected readonly agregados = signal<string[]>([]);
+  private readonly campoNombre = viewChild<ElementRef<HTMLInputElement>>('campoNombre');
 
-  protected readonly esAdmin;
+  protected readonly tieneOpcionales = computed(() => {
+    const f = this.form();
+    return !!(f.puesto || f.pushoverDevice || f.sonido);
+  });
 
   protected readonly activos = computed(() => this.contactos().filter((c) => c.activo));
 
@@ -84,10 +97,7 @@ export class Notificar implements OnInit, OnDestroy {
   constructor(
     private readonly avisosService: AvisosService,
     private readonly toastService: ToastService,
-    authService: AuthService,
-  ) {
-    this.esAdmin = computed(() => authService.currentUser()?.rol === 'administrador');
-  }
+  ) {}
 
   ngOnInit(): void {
     this.cargarContactos();
@@ -175,8 +185,10 @@ export class Notificar implements OnInit, OnDestroy {
 
   protected abrirNuevo(): void {
     this.editando.set(null);
-    this.form.set({ nombre: '', puesto: '', pushoverUser: '', pushoverDevice: '', sonido: '' });
+    this.agregados.set([]);
+    this.limpiarForm();
     this.formAbierto.set(true);
+    this.enfocarNombre();
   }
 
   protected abrirEditar(contacto: ContactoAviso): void {
@@ -204,7 +216,13 @@ export class Notificar implements OnInit, OnDestroy {
 
   protected guardar(evento: Event): void {
     evento.preventDefault();
-    const datos = { ...this.form(), pushoverUser: this.form().pushoverUser.trim() };
+    // El botón "Guardar y agregar otra" deja el formulario abierto y vacío para la siguiente persona.
+    const seguir = (evento as SubmitEvent).submitter?.dataset['seguir'] === '1';
+    const datos = {
+      ...this.form(),
+      nombre: this.form().nombre.trim(),
+      pushoverUser: this.form().pushoverUser.trim(),
+    };
     const editando = this.editando();
     this.guardando.set(true);
 
@@ -215,13 +233,19 @@ export class Notificar implements OnInit, OnDestroy {
     peticion.subscribe({
       next: (r) => {
         this.guardando.set(false);
-        this.formAbierto.set(false);
         const dispositivos = r.dispositivos ?? [];
         this.toastService.success(
           editando
             ? `Se guardaron los cambios de ${datos.nombre}.`
             : `${datos.nombre} quedó registrado${dispositivos.length ? ` (${dispositivos.join(', ')})` : ''}.`,
         );
+        if (seguir) {
+          this.agregados.update((a) => [...a, datos.nombre]);
+          this.limpiarForm();
+          this.enfocarNombre();
+        } else {
+          this.formAbierto.set(false);
+        }
         this.cargarContactos();
       },
       error: (e) => {
@@ -249,6 +273,14 @@ export class Notificar implements OnInit, OnDestroy {
   }
 
   // ---------- Internos ----------
+
+  private limpiarForm(): void {
+    this.form.set({ nombre: '', puesto: '', pushoverUser: '', pushoverDevice: '', sonido: '' });
+  }
+
+  private enfocarNombre(): void {
+    setTimeout(() => this.campoNombre()?.nativeElement.focus());
+  }
 
   private enviar(ids: number[]): void {
     this.enviando.update((s) => new Set([...s, ...ids]));
