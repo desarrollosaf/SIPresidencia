@@ -3,7 +3,6 @@
   "short_name": "Llamar",
   "description": "Llamar al equipo de Presidencia desde la tableta.",
   "lang": "es-MX",
-  "start_url": "/tableta",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

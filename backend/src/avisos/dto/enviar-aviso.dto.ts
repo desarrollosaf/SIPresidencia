@@ -18,4 +18,10 @@ export class EnviarAvisoDto {
   @IsString()
   @MaxLength(200)
   mensaje?: string;
+
+  // Solo tableta: slug del equipo desde el que se llama; su encargado firma la alerta.
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  equipo?: string;
 }

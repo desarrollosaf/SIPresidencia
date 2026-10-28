@@ -4,7 +4,7 @@
     <h1>Equipo de trabajo</h1>
     <p>
       Agrega, edita o quita a las personas que se pueden llamar. Su teléfono vibrará y sonará,
-      aunque esté en silencio, hasta que vea el aviso.
+      aunque esté en silencio.
     </p>
   </div>
   <div class="avisos-head-acciones">
@@ -145,132 +145,165 @@
 
 @if (cargando()) {
   <p class="empty">Cargando equipo…</p>
+} @else if (!contactos().length) {
+  <div class="card avisos-vacio">
+    <p class="empty">
+      Todavía no hay nadie en el equipo.
+      <br />Usa <b>Agregar persona</b> con su nombre completo, su equipo y el token que le da la app
+      de Pushover.
+    </p>
+    <button type="button" class="btn" (click)="abrirNuevo()">Agregar persona</button>
+  </div>
 } @else {
-  <div class="avisos-grid">
-    @for (c of contactos(); track c.id; let i = $index) {
-      @let est = estadoDe(c);
-      <div
-        class="aviso-card"
-        [class.sonando]="est?.estado === 'sonando'"
-        [class.visto]="est?.estado === 'visto'"
-        [class.pausado]="!c.activo"
-      >
-        <div class="aviso-card-admin">
-          <button type="button" title="Editar" (click)="abrirEditar(c)">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 20h4L19 9l-4-4L4 16v4Z"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button type="button" title="Quitar" (click)="pedirEliminar(c)">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div class="aviso-avatar" [class]="'tono-' + tono(i)">
-          <span>{{ iniciales(c.nombre) }}</span>
-          @if (est?.estado === 'sonando') {
-            <i class="onda"></i><i class="onda d2"></i>
-          }
-          @if (est?.estado === 'visto') {
-            <b class="aviso-check">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M5 12.5l4.5 4.5L19 7.5"
-                  stroke="currentColor"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </b>
-          }
-        </div>
-
-        <h3 class="aviso-nombre">{{ c.nombre }}</h3>
-        <div class="aviso-puesto">{{ c.puesto || 'Equipo de Presidencia' }}</div>
-
-        <div class="aviso-estado">
-          @if (!c.activo) {
-            <span class="pill gray">Pausado</span>
-          } @else {
-            @switch (est?.estado) {
-              @case ('sonando') {
-                <span class="pill aviso-pill-sonando"
-                  ><span class="dot"></span>Sonando · {{ hace(est!.enviadoEn) }}</span
-                >
-              }
-              @case ('visto') {
-                <span class="pill aviso-pill-visto">✓ Lo vio a las {{ hora(est!.vistoEn!) }}</span>
-              }
-              @case ('expirado') {
-                <span class="pill brass">No lo vio · {{ hace(est!.enviadoEn) }}</span>
-              }
-              @case ('cancelado') {
-                <span class="pill gray">Alerta detenida</span>
-              }
-              @default {
-                <span class="pill gray">Disponible</span>
-              }
+  @for (g of grupos(); track g.clave) {
+    <section class="avisos-grupo">
+      <div class="avisos-grupo-h">
+        <div>
+          <h2>{{ g.equipo ? 'Equipo de ' + g.equipo.encargado : 'Sin equipo' }}</h2>
+          <span>
+            {{ g.personas.length }} {{ g.personas.length === 1 ? 'persona' : 'personas' }}
+            @if (g.equipo) {
+              · tableta: <b>/tableta/{{ g.equipo.slug }}</b>
+            } @else {
+              · edítalas para asignarles un equipo
             }
-          }
+          </span>
         </div>
-
-        @if (est?.estado === 'sonando') {
-          <button type="button" class="btn line aviso-boton" (click)="detener(c)">
-            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
-              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-            </svg>
-            Detener
-          </button>
-        } @else {
-          <button
-            type="button"
-            class="btn aviso-boton"
-            [disabled]="!c.activo || estaEnviando(c)"
-            (click)="notificar(c)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" width="17" height="17">
-              <path
-                d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
-                stroke="currentColor"
-                stroke-width="1.9"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M10 18a2 2 0 0 0 4 0"
-                stroke="currentColor"
-                stroke-width="1.9"
-                stroke-linecap="round"
-              />
-            </svg>
-            {{ estaEnviando(c) ? 'Enviando…' : 'Notificar' }}
-          </button>
+        @if (g.equipo) {
+          <div class="avisos-grupo-acciones">
+            <a
+              class="btn line sm"
+              [href]="'/tableta/' + g.equipo.slug"
+              target="_blank"
+              rel="noopener"
+              >Abrir su tableta ↗</a
+            >
+            <button type="button" class="btn line sm" (click)="abrirNuevo(g.equipo.id)">
+              + Agregar
+            </button>
+          </div>
         }
       </div>
-    } @empty {
-      <div class="card avisos-vacio">
-        <p class="empty">
-          Todavía no hay nadie en el equipo.
-          <br />Usa <b>Agregar persona</b> con su nombre completo y el token que le da la app de
-          Pushover.
-        </p>
-        <button type="button" class="btn" (click)="abrirNuevo()">Agregar persona</button>
+      <div class="avisos-grid">
+        @for (c of g.personas; track c.id) {
+          @let est = estadoDe(c);
+          <div
+            class="aviso-card"
+            [class.sonando]="est?.estado === 'sonando'"
+            [class.visto]="est?.estado === 'visto'"
+            [class.pausado]="!c.activo"
+          >
+            <div class="aviso-card-admin">
+              <button type="button" title="Editar" (click)="abrirEditar(c)">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M4 20h4L19 9l-4-4L4 16v4Z"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button type="button" title="Quitar" (click)="pedirEliminar(c)">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div class="aviso-avatar" [class]="'tono-' + tono(c.id)">
+              <span>{{ iniciales(c.nombre) }}</span>
+              @if (est?.estado === 'sonando') {
+                <i class="onda"></i><i class="onda d2"></i>
+              }
+              @if (est?.estado === 'visto') {
+                <b class="aviso-check">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M5 12.5l4.5 4.5L19 7.5"
+                      stroke="currentColor"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </b>
+              }
+            </div>
+
+            <h3 class="aviso-nombre">{{ c.nombre }}</h3>
+            <div class="aviso-puesto">{{ c.puesto || 'Equipo de trabajo' }}</div>
+
+            <div class="aviso-estado">
+              @if (!c.activo) {
+                <span class="pill gray">Pausado</span>
+              } @else {
+                @switch (est?.estado) {
+                  @case ('sonando') {
+                    <span class="pill aviso-pill-sonando"
+                      ><span class="dot"></span>Sonando · {{ hace(est!.enviadoEn) }}</span
+                    >
+                  }
+                  @case ('visto') {
+                    <span class="pill aviso-pill-visto"
+                      >✓ Lo vio a las {{ hora(est!.vistoEn!) }}</span
+                    >
+                  }
+                  @case ('expirado') {
+                    <span class="pill gray">Avisado · {{ hace(est!.enviadoEn) }}</span>
+                  }
+                  @case ('cancelado') {
+                    <span class="pill gray">Alerta detenida</span>
+                  }
+                  @default {
+                    <span class="pill gray">Disponible</span>
+                  }
+                }
+              }
+            </div>
+
+            @if (est?.estado === 'sonando') {
+              <button type="button" class="btn line aviso-boton" (click)="detener(c)">
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                  <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
+                </svg>
+                Detener
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn aviso-boton"
+                [disabled]="!c.activo || estaEnviando(c)"
+                (click)="notificar(c)"
+              >
+                <svg viewBox="0 0 24 24" fill="none" width="17" height="17">
+                  <path
+                    d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M10 18a2 2 0 0 0 4 0"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                {{ estaEnviando(c) ? 'Enviando…' : 'Notificar' }}
+              </button>
+            }
+          </div>
+        }
       </div>
-    }
-  </div>
+    </section>
+  }
 }
 
 @if (formAbierto()) {
@@ -322,6 +355,24 @@
           />
         </div>
         <div class="field">
+          <label>¿De qué equipo es?</label>
+          <div class="avisos-equipo-opciones" role="radiogroup">
+            @for (e of equipos(); track e.id) {
+              <button
+                type="button"
+                role="radio"
+                class="avisos-equipo-opcion"
+                [class.activa]="form().equipoId === e.id"
+                [attr.aria-checked]="form().equipoId === e.id"
+                (click)="elegirEquipo(e.id)"
+              >
+                <b>{{ e.encargado }}</b>
+                <span>{{ e.nombre === e.encargado ? 'Encargado' : e.nombre }}</span>
+              </button>
+            }
+          </div>
+        </div>
+        <div class="field">
           <label for="av-user">Token (User Key de Pushover)</label>
           <input
             id="av-user"
@@ -331,7 +382,7 @@
             maxlength="30"
             autocomplete="off"
             spellcheck="false"
-            placeholder="u2gdzi8tiqihosnad7rtdoubib4ko6"
+            placeholder="Pega aquí su token"
             [value]="form().pushoverUser"
             (input)="campo('pushoverUser', $event)"
           />

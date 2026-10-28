@@ -30,4 +30,8 @@ export class ContactoAviso extends Model {
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   declare activo: boolean;
+
+  // Equipo (encargado) al que pertenece; decide en qué tableta aparece.
+  @Column({ type: DataType.INTEGER, allowNull: true, field: 'equipo_id' })
+  declare equipoId: number | null;
 }

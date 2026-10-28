@@ -3,7 +3,7 @@
     <div class="kiosco-barra">
       <div class="kiosco-marca">
         <div class="seal">SP</div>
-        <span>Presidencia</span>
+        <span>{{ equipoActual()?.encargado ?? 'Presidencia' }}</span>
       </div>
       <div class="kiosco-opciones">
         @if (pantallaCompletaDisponible) {
@@ -24,148 +24,207 @@
             </svg>
           </button>
         }
-        <a class="kiosco-icono" routerLink="/llamar" title="Salir del modo tableta">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path
-              d="M6 6l12 12M18 6 6 18"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </a>
+        @if (conSesion) {
+          <a class="kiosco-icono" routerLink="/llamar" title="Salir del modo tableta">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6l12 12M18 6 6 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </a>
+        }
       </div>
     </div>
   }
 
-  <header class="llamar-head">
-    <div>
-      @if (kiosco) {
-        <h1>{{ saludo }}</h1>
-        <p>¿A quién necesitas? Toca su nombre y su teléfono sonará hasta que lo vea.</p>
+  @if (sinAcceso(); as motivo) {
+    <div class="estado-vacio kiosco-sin-acceso">
+      <div class="estado-vacio-icono">
+        <svg viewBox="0 0 24 24" fill="none">
+          <rect
+            x="5"
+            y="10.5"
+            width="14"
+            height="9.5"
+            rx="2"
+            stroke="currentColor"
+            stroke-width="1.7"
+          />
+          <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" stroke="currentColor" stroke-width="1.7" />
+        </svg>
+      </div>
+      @if (motivo === 'equipo') {
+        <h3>Esta tableta no existe</h3>
+        <p>Revisa la dirección: debe ser la de un equipo, como /tableta/presidente.</p>
       } @else {
-        <h1>Llamar</h1>
-        <p>Toca a una persona y su teléfono sonará hasta que lo vea.</p>
+        <h3>Este enlace ya no es válido</h3>
+        <p>Pide a quien administra SIPresidencia el enlace nuevo de la tableta.</p>
       }
     </div>
-    <div class="llamar-acciones">
-      @if (!kiosco) {
-        <a class="llamar-boton" routerLink="/tableta" title="Pantalla completa para la tableta">
-          Modo tableta
-        </a>
-      }
-      @if (totales().sonando > 0) {
-        <button type="button" class="llamar-boton" (click)="detener()">Detener todas</button>
-      }
-      @if (activos().length > 1) {
-        <button type="button" class="llamar-boton primario" (click)="notificarTodos()">
-          Llamar a todos
+  } @else {
+    <header class="llamar-head">
+      <div>
+        @if (kiosco) {
+          <h1>{{ saludo }}</h1>
+          <p>¿A quién necesitas? Toca su nombre y le sonará el teléfono.</p>
+        } @else {
+          <h1>Llamar</h1>
+          <p>Toca a una persona y le sonará el teléfono, aunque esté en silencio.</p>
+        }
+      </div>
+      <div class="llamar-acciones">
+        @if (!kiosco) {
+          <a
+            class="llamar-boton"
+            [routerLink]="['/tableta', slugTableta()]"
+            title="Pantalla completa para la tableta de este equipo"
+          >
+            Modo tableta
+          </a>
+        }
+        @if (totales().sonando > 0) {
+          <button type="button" class="llamar-boton" (click)="detener()">Detener todas</button>
+        }
+        @if (visibles().length > 1) {
+          <button type="button" class="llamar-boton primario" (click)="notificarTodos()">
+            Llamar a todos
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (!kiosco && equipos().length > 1) {
+      <div class="segmented llamar-equipos" role="tablist" aria-label="Equipo">
+        <button
+          type="button"
+          role="tab"
+          [class.active]="filtroEquipo() === 'todos'"
+          (click)="filtroEquipo.set('todos')"
+        >
+          Todos
+        </button>
+        @for (e of equipos(); track e.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.active]="filtroEquipo() === e.id"
+            (click)="filtroEquipo.set(e.id)"
+          >
+            {{ e.encargado }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="llamar-mensajes" role="group" aria-label="Mensaje">
+      @for (texto of mensajesRapidos; track texto) {
+        <button
+          type="button"
+          class="llamar-chip"
+          [class.activo]="mensaje() === texto"
+          [attr.aria-pressed]="mensaje() === texto"
+          (click)="usarMensajeRapido(texto)"
+        >
+          {{ texto }}
         </button>
       }
     </div>
-  </header>
 
-  <div class="llamar-mensajes" role="group" aria-label="Mensaje">
-    @for (texto of mensajesRapidos; track texto) {
-      <button
-        type="button"
-        class="llamar-chip"
-        [class.activo]="mensaje() === texto"
-        [attr.aria-pressed]="mensaje() === texto"
-        (click)="usarMensajeRapido(texto)"
-      >
-        {{ texto }}
-      </button>
-    }
-  </div>
-
-  @if (cargando()) {
-    <p class="empty">Cargando…</p>
-  } @else {
-    <div class="llamar-grid">
-      @for (c of activos(); track c.id; let i = $index) {
-        @let est = estadoDe(c);
-        <div
-          class="llamar-card"
-          [class.sonando]="est?.estado === 'sonando'"
-          [class.visto]="est?.estado === 'visto'"
-        >
-          <button
-            type="button"
-            class="llamar-tap"
-            [disabled]="estaEnviando(c) || est?.estado === 'sonando'"
-            [attr.aria-label]="'Llamar a ' + c.nombre"
-            (click)="notificar(c)"
+    @if (cargando()) {
+      <p class="empty">Cargando…</p>
+    } @else {
+      <div class="llamar-grid">
+        @for (c of visibles(); track c.id) {
+          @let est = estadoDe(c);
+          <div
+            class="llamar-card"
+            [class.sonando]="est?.estado === 'sonando'"
+            [class.visto]="est?.estado === 'visto'"
           >
-            <span class="aviso-avatar llamar-avatar" [class]="'tono-' + tono(i)">
-              <span>{{ iniciales(c.nombre) }}</span>
-              @if (est?.estado === 'sonando') {
-                <i class="onda"></i><i class="onda d2"></i>
-              }
-              @if (est?.estado === 'visto') {
-                <b class="aviso-check">
-                  <svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M5 12.5l4.5 4.5L19 7.5"
-                      stroke="currentColor"
-                      stroke-width="3"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </b>
-              }
-            </span>
-            <span class="llamar-nombre">{{ c.nombre }}</span>
-            <span class="llamar-estado">
-              @if (estaEnviando(c)) {
-                Llamando…
-              } @else {
-                @switch (est?.estado) {
-                  @case ('sonando') {
-                    Sonando · {{ hace(est!.enviadoEn) }}
-                  }
-                  @case ('visto') {
-                    Lo vio a las {{ hora(est!.vistoEn!) }}
-                  }
-                  @case ('expirado') {
-                    No lo vio
-                  }
-                  @default {
-                    {{ c.puesto || 'Toca para llamar' }}
+            <button
+              type="button"
+              class="llamar-tap"
+              [disabled]="estaEnviando(c) || est?.estado === 'sonando'"
+              [attr.aria-label]="'Llamar a ' + c.nombre"
+              (click)="notificar(c)"
+            >
+              <span class="aviso-avatar llamar-avatar" [class]="'tono-' + tono(c.id)">
+                <span>{{ iniciales(c.nombre) }}</span>
+                @if (est?.estado === 'sonando') {
+                  <i class="onda"></i><i class="onda d2"></i>
+                }
+                @if (est?.estado === 'visto') {
+                  <b class="aviso-check">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 12.5l4.5 4.5L19 7.5"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </b>
+                }
+              </span>
+              <span class="llamar-nombre">{{ c.nombre }}</span>
+              <span class="llamar-estado">
+                @if (estaEnviando(c)) {
+                  Llamando…
+                } @else {
+                  @switch (est?.estado) {
+                    @case ('sonando') {
+                      Sonando · {{ hace(est!.enviadoEn) }}
+                    }
+                    @case ('visto') {
+                      Lo vio a las {{ hora(est!.vistoEn!) }}
+                    }
+                    @case ('expirado') {
+                      Avisado · {{ hace(est!.enviadoEn) }}
+                    }
+                    @default {
+                      @if (!kiosco && filtroEquipo() === 'todos' && equipoDe(c)) {
+                        Equipo de {{ equipoDe(c)!.encargado }}
+                      } @else {
+                        {{ c.puesto || 'Toca para llamar' }}
+                      }
+                    }
                   }
                 }
-              }
-            </span>
-          </button>
-          @if (est?.estado === 'sonando') {
-            <button type="button" class="llamar-detener" (click)="detener(c)">Detener</button>
-          }
-        </div>
-      } @empty {
-        <div class="estado-vacio llamar-vacio">
-          <div class="estado-vacio-icono">
-            <svg viewBox="0 0 24 24" fill="none">
-              <circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.7" />
-              <path
-                d="M3 19c.6-3.4 2.9-5.2 6-5.2s5.4 1.8 6 5.2"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-              />
-              <path
-                d="M18 8v6M15 11h6"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-              />
-            </svg>
+              </span>
+            </button>
+            @if (est?.estado === 'sonando') {
+              <button type="button" class="llamar-detener" (click)="detener(c)">Detener</button>
+            }
           </div>
-          <h3>Aún no hay nadie en el equipo</h3>
-          <p>Agrega a las personas desde <b>Equipo de trabajo</b> y aparecerán aquí.</p>
-        </div>
-      }
-    </div>
+        } @empty {
+          <div class="estado-vacio llamar-vacio">
+            <div class="estado-vacio-icono">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.7" />
+                <path
+                  d="M3 19c.6-3.4 2.9-5.2 6-5.2s5.4 1.8 6 5.2"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M18 8v6M15 11h6"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <h3>Aún no hay nadie en este equipo</h3>
+            <p>Agrega a las personas desde <b>Equipo de trabajo</b> y aparecerán aquí.</p>
+          </div>
+        }
+      </div>
+    }
   }
 </div>
 

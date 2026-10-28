@@ -6,10 +6,12 @@ export const routes: Routes = [
     path: 'login',
     loadChildren: () => import('./features/login/login.routes').then((m) => m.LOGIN_ROUTES),
   },
-  // "Llamar" a pantalla completa para la tableta del titular (sin menú ni barra superior).
+  // "Llamar" a pantalla completa para la tableta de cada equipo (sin menú ni barra superior):
+  // /tableta/presidente, /tableta/omar… No pide sesión (si el backend define TABLETA_LLAVE,
+  // hace falta ?llave=…). /tableta a secas es la dirección anterior: lleva a la del Presidente.
+  { path: 'tableta', pathMatch: 'full', redirectTo: 'tableta/presidente' },
   {
-    path: 'tableta',
-    canActivate: [authGuard],
+    path: 'tableta/:equipo',
     data: { kiosco: true },
     loadComponent: () => import('./features/llamar/llamar').then((m) => m.Llamar),
   },

@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleDestroy,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +14,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { firstValueFrom } from 'rxjs';
 import { isAxiosError } from 'axios';
 import { ContactoAviso } from '../database/models/contacto-aviso.model';
+import { EquipoAviso } from '../database/models/equipo-aviso.model';
 import { Usuario } from '../database/models/usuario.model';
 import { ActualizarContactoDto, CrearContactoDto } from './dto/contacto.dto';
 
@@ -20,19 +22,22 @@ import { ActualizarContactoDto, CrearContactoDto } from './dto/contacto.dto';
 const TAG_GENERAL = 'sipresidencia';
 // No consultar el mismo recibo más de una vez cada tantos ms (Pushover pide no saturar /receipts).
 const CONSULTA_RECIBO_MS = 5000;
+// Prioridad de emergencia (suena en silencio) pero sin que Pushover la repita: dura menos que
+// el reintento mínimo (30 s), así que suena una sola vez y no hay que confirmarla.
+const REINTENTO_S = 30;
+const EXPIRA_S = 20;
 
 export type EstadoAviso =
   'sonando' | 'visto' | 'expirado' | 'cancelado' | 'error';
 
 interface UltimoAviso {
-  receipt: string | null;
+  receipts: string[];
   estado: EstadoAviso;
   enviadoEn: number;
   enviadoPor: string;
   mensaje: string;
   vistoEn: number | null;
   ultimaConsulta: number;
-  error?: string;
 }
 
 export interface ResultadoAviso {
@@ -43,18 +48,53 @@ export interface ResultadoAviso {
 }
 
 @Injectable()
-export class AvisosService {
+export class AvisosService implements OnModuleDestroy {
   private readonly logger = new Logger('Avisos');
   // Último aviso por contacto. En memoria: si el backend se reinicia solo se pierde el estado en pantalla.
   private readonly ultimos = new Map<number, UltimoAviso>();
+  // Segunda alerta programada por contacto; "Detener" la cancela antes de que salga.
+  private readonly segundas = new Map<number, ReturnType<typeof setTimeout>>();
 
   constructor(
     @InjectModel(ContactoAviso)
     private readonly contactos: typeof ContactoAviso,
+    @InjectModel(EquipoAviso) private readonly equipos: typeof EquipoAviso,
     @InjectModel(Usuario) private readonly usuarios: typeof Usuario,
     private readonly http: HttpService,
     private readonly config: ConfigService,
   ) {}
+
+  onModuleDestroy() {
+    this.segundas.forEach((t) => clearTimeout(t));
+  }
+
+  // ---------- Equipos ----------
+
+  async listarEquipos() {
+    const filas = await this.equipos.findAll({
+      order: [
+        ['orden', 'ASC'],
+        ['nombre', 'ASC'],
+      ],
+    });
+    return filas.map((e) => ({
+      id: e.id,
+      slug: e.slug,
+      nombre: e.nombre,
+      encargado: e.encargado,
+    }));
+  }
+
+  /** Quién firma las alertas que salen de la tableta de un equipo. */
+  async encargadoDe(slug: string | undefined): Promise<string> {
+    if (!slug) return 'Presidencia';
+    return (await this.buscarEquipo(slug)).encargado;
+  }
+
+  /** Quién firma las alertas que manda un usuario con sesión. */
+  async nombreUsuario(usuarioId: number): Promise<string> {
+    return (await this.usuarios.findByPk(usuarioId))?.nombre ?? 'Presidencia';
+  }
 
   // ---------- Contactos ----------
 
@@ -68,10 +108,28 @@ export class AvisosService {
       pushoverDevice: c.pushoverDevice,
       sonido: c.sonido,
       activo: c.activo,
+      equipoId: c.equipoId,
+    }));
+  }
+
+  /** Lista para la tableta: solo personas activas (de un equipo, si se indica) y sin sus claves. */
+  async listarParaTableta(slug?: string) {
+    const equipo = slug ? await this.buscarEquipo(slug) : null;
+    const filas = await this.contactos.findAll({
+      where: { activo: true, ...(equipo && { equipoId: equipo.id }) },
+      order: [['nombre', 'ASC']],
+    });
+    return filas.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      puesto: c.puesto,
+      activo: c.activo,
+      equipoId: c.equipoId,
     }));
   }
 
   async crear(dto: CrearContactoDto) {
+    await this.validarEquipo(dto.equipoId);
     const dispositivos = await this.validarUsuario(
       dto.pushoverUser,
       dto.pushoverDevice,
@@ -82,12 +140,14 @@ export class AvisosService {
       pushoverUser: dto.pushoverUser,
       pushoverDevice: dto.pushoverDevice?.trim() || null,
       sonido: dto.sonido || null,
+      equipoId: dto.equipoId,
     });
     return { id: contacto.id, dispositivos };
   }
 
   async actualizar(id: number, dto: ActualizarContactoDto) {
     const contacto = await this.buscar(id);
+    if (dto.equipoId !== undefined) await this.validarEquipo(dto.equipoId);
     const user = dto.pushoverUser ?? contacto.pushoverUser;
     const device =
       dto.pushoverDevice !== undefined
@@ -105,6 +165,7 @@ export class AvisosService {
       }),
       ...(dto.sonido !== undefined && { sonido: dto.sonido || null }),
       ...(dto.activo !== undefined && { activo: dto.activo }),
+      ...(dto.equipoId !== undefined && { equipoId: dto.equipoId }),
     });
     return { ok: true };
   }
@@ -112,6 +173,7 @@ export class AvisosService {
   async eliminar(id: number) {
     const contacto = await this.buscar(id);
     await contacto.destroy();
+    this.cancelarSegunda(id);
     this.ultimos.delete(id);
     return { ok: true };
   }
@@ -121,9 +183,9 @@ export class AvisosService {
   async enviar(
     ids: number[],
     mensaje: string | undefined,
-    usuarioId: number,
+    remitente: string,
   ): Promise<ResultadoAviso[]> {
-    const token = this.token();
+    this.token();
     const contactos = await this.contactos.findAll({
       where: { id: ids, activo: true },
     });
@@ -146,36 +208,17 @@ export class AvisosService {
       );
     }
 
-    const remitente =
-      (await this.usuarios.findByPk(usuarioId))?.nombre ?? 'Presidencia';
     const texto = mensaje?.trim() || 'Te necesitan, por favor acude.';
+    const repetirMs =
+      (this.config.get<number>('pushover.repetirSegundos') ?? 5) * 1000;
 
     return Promise.all(
       listos.map(async (c): Promise<ResultadoAviso> => {
         try {
-          const { data } = await this.post<{ receipt: string }>(
-            '/messages.json',
-            {
-              token,
-              user: c.pushoverUser,
-              device: c.pushoverDevice || undefined,
-              title: '🚨 Te buscan de Presidencia',
-              message: `${texto}\n— ${remitente}`,
-              priority: 2,
-              retry: Math.max(
-                30,
-                this.config.get<number>('pushover.reintentoSegundos') ?? 30,
-              ),
-              expire: Math.min(
-                10800,
-                this.config.get<number>('pushover.expiraSegundos') ?? 10800,
-              ),
-              sound: c.sonido || this.config.get<string>('pushover.sonido'),
-              tags: `${TAG_GENERAL},contacto-${c.id}`,
-            },
-          );
+          const receipt = await this.alertar(c, texto, remitente);
+          this.cancelarSegunda(c.id);
           this.ultimos.set(c.id, {
-            receipt: data.receipt,
+            receipts: [receipt],
             estado: 'sonando',
             enviadoEn: Date.now(),
             enviadoPor: remitente,
@@ -183,6 +226,8 @@ export class AvisosService {
             vistoEn: null,
             ultimaConsulta: Date.now(),
           });
+          if (repetirMs > 0)
+            this.programarSegunda(c, texto, remitente, repetirMs);
           this.logger.log(`Aviso a ${c.nombre} enviado por ${remitente}`);
           return { id: c.id, nombre: c.nombre, ok: true };
         } catch (e) {
@@ -199,35 +244,43 @@ export class AvisosService {
     const token = this.config.get<string>('pushover.token');
     const ahora = Date.now();
     await Promise.all(
-      [...this.ultimos.values()]
+      [...this.ultimos.entries()]
         .filter(
-          (u) =>
+          ([, u]) =>
             u.estado === 'sonando' &&
-            u.receipt &&
             ahora - u.ultimaConsulta >= CONSULTA_RECIBO_MS,
         )
-        .map(async (u) => {
+        .map(async ([id, u]) => {
           u.ultimaConsulta = ahora;
           try {
-            const { data } = await firstValueFrom(
-              this.http.get<{
-                acknowledged: number;
-                acknowledged_at: number;
-                expired: number;
-              }>(`${this.apiUrl()}/receipts/${u.receipt}.json`, {
-                params: { token },
-                timeout: this.timeout(),
+            const recibos = await Promise.all(
+              u.receipts.map(async (r) => {
+                const { data } = await firstValueFrom(
+                  this.http.get<{
+                    acknowledged: number;
+                    acknowledged_at: number;
+                    expired: number;
+                  }>(`${this.apiUrl()}/receipts/${r}.json`, {
+                    params: { token },
+                    timeout: this.timeout(),
+                  }),
+                );
+                return data;
               }),
             );
-            if (data.acknowledged) {
+            const visto = recibos.find((d) => d.acknowledged);
+            if (visto) {
               u.estado = 'visto';
-              u.vistoEn = data.acknowledged_at * 1000;
-            } else if (data.expired) {
+              u.vistoEn = visto.acknowledged_at * 1000;
+            } else if (
+              !this.segundas.has(id) &&
+              recibos.every((d) => d.expired)
+            ) {
               u.estado = 'expirado';
             }
           } catch (e) {
             this.logger.warn(
-              `No se pudo consultar el recibo ${u.receipt}: ${this.mensajeError(e)}`,
+              `No se pudo consultar el aviso de ${id}: ${this.mensajeError(e)}`,
             );
           }
         }),
@@ -249,6 +302,9 @@ export class AvisosService {
   /** Detiene la alerta de una persona, o todas si no se indica. */
   async cancelar(id?: number) {
     const token = this.token();
+    if (id) this.cancelarSegunda(id);
+    else [...this.segundas.keys()].forEach((k) => this.cancelarSegunda(k));
+
     const tag = id ? `contacto-${id}` : TAG_GENERAL;
     const { data } = await this.post<{ canceled?: number }>(
       `/receipts/cancel_by_tag/${tag}.json`,
@@ -263,10 +319,67 @@ export class AvisosService {
 
   // ---------- Internos ----------
 
+  /** Manda una alerta crítica (suena en silencio) que no se repite. Devuelve su recibo. */
+  private async alertar(
+    c: ContactoAviso,
+    texto: string,
+    remitente: string,
+  ): Promise<string> {
+    const { data } = await this.post<{ receipt: string }>('/messages.json', {
+      token: this.token(),
+      user: c.pushoverUser,
+      device: c.pushoverDevice || undefined,
+      title: '🚨 Te buscan de Presidencia',
+      message: `${texto}\n— ${remitente}`,
+      priority: 2,
+      retry: REINTENTO_S,
+      expire: EXPIRA_S,
+      sound: c.sonido || this.config.get<string>('pushover.sonido'),
+      tags: `${TAG_GENERAL},contacto-${c.id}`,
+    });
+    return data.receipt;
+  }
+
+  private programarSegunda(
+    c: ContactoAviso,
+    texto: string,
+    remitente: string,
+    ms: number,
+  ) {
+    const timer = setTimeout(() => {
+      this.segundas.delete(c.id);
+      this.alertar(c, texto, remitente)
+        .then((receipt) => this.ultimos.get(c.id)?.receipts.push(receipt))
+        .catch((e) =>
+          this.logger.warn(
+            `Segunda alerta a ${c.nombre} falló: ${this.mensajeError(e)}`,
+          ),
+        );
+    }, ms);
+    this.segundas.set(c.id, timer);
+  }
+
+  private cancelarSegunda(id: number) {
+    clearTimeout(this.segundas.get(id));
+    this.segundas.delete(id);
+  }
+
   private async buscar(id: number) {
     const contacto = await this.contactos.findByPk(id);
     if (!contacto) throw new NotFoundException('No existe esa persona.');
     return contacto;
+  }
+
+  private async buscarEquipo(slug: string) {
+    const equipo = await this.equipos.findOne({ where: { slug } });
+    if (!equipo) throw new NotFoundException('No existe ese equipo.');
+    return equipo;
+  }
+
+  private async validarEquipo(id: number) {
+    if (!(await this.equipos.findByPk(id))) {
+      throw new BadRequestException('Elige un equipo válido.');
+    }
   }
 
   /** Confirma con Pushover que el User Key existe y tiene un teléfono registrado. */

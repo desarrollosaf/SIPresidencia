@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -61,6 +62,10 @@ export class CrearContactoDto {
   @IsOptional()
   @IsIn([...SONIDOS_PUSHOVER, ''])
   sonido?: string;
+
+  // Equipo (encargado) al que pertenece: decide en qué tableta aparece.
+  @IsInt({ message: 'Elige de qué equipo es' })
+  equipoId: number;
 }
 
 export class ActualizarContactoDto {
@@ -93,4 +98,8 @@ export class ActualizarContactoDto {
   @IsOptional()
   @IsBoolean()
   activo?: boolean;
+
+  @IsOptional()
+  @IsInt({ message: 'Elige de qué equipo es' })
+  equipoId?: number;
 }

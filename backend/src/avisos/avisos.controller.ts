@@ -24,6 +24,11 @@ import { EnviarAvisoDto } from './dto/enviar-aviso.dto';
 export class AvisosController {
   constructor(private readonly avisos: AvisosService) {}
 
+  @Get('equipos')
+  equipos() {
+    return this.avisos.listarEquipos();
+  }
+
   @Get('contactos')
   listar() {
     return this.avisos.listar();
@@ -53,9 +58,10 @@ export class AvisosController {
   }
 
   @Post('enviar')
-  enviar(@Body() dto: EnviarAvisoDto, @Req() req: Request) {
+  async enviar(@Body() dto: EnviarAvisoDto, @Req() req: Request) {
     const usuario = req['user'] as JwtPayload;
-    return this.avisos.enviar(dto.contactos, dto.mensaje, usuario.sub);
+    const remitente = await this.avisos.nombreUsuario(usuario.sub);
+    return this.avisos.enviar(dto.contactos, dto.mensaje, remitente);
   }
 
   @Post('cancelar')

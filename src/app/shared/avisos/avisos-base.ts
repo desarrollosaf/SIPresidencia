@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   AvisosService,
   ContactoAviso,
+  EquipoAviso,
   ResultadoAviso,
   UltimoAviso,
 } from '../../core/services/avisos.service';
@@ -41,17 +42,31 @@ export abstract class AvisosBase implements OnInit, OnDestroy {
 
   protected readonly cargando = signal(true);
   protected readonly contactos = signal<ContactoAviso[]>([]);
+  protected readonly equipos = signal<EquipoAviso[]>([]);
   protected readonly estados = signal<Record<number, UltimoAviso>>({});
   protected readonly mensaje = signal('');
   protected readonly enviando = signal<Set<number>>(new Set());
   protected readonly ahora = signal(Date.now());
+  // Pestaña de equipo elegida (id del equipo) o 'todos'.
+  protected readonly filtroEquipo = signal<number | 'todos'>('todos');
 
   protected readonly activos = computed(() => this.contactos().filter((c) => c.activo));
 
+  // Personas activas del equipo elegido: las que se muestran y las que avisa "Llamar a todos".
+  protected readonly visibles = computed(() => {
+    const filtro = this.filtroEquipo();
+    return filtro === 'todos'
+      ? this.activos()
+      : this.activos().filter((c) => c.equipoId === filtro);
+  });
+
   protected readonly totales = computed(() => {
-    const estados = Object.values(this.estados());
+    const ids = new Set(this.visibles().map((c) => c.id));
+    const estados = Object.entries(this.estados())
+      .filter(([id]) => ids.has(Number(id)))
+      .map(([, e]) => e);
     return {
-      equipo: this.activos().length,
+      equipo: ids.size,
       sonando: estados.filter((e) => e.estado === 'sonando').length,
       vistos: estados.filter((e) => e.estado === 'visto').length,
     };
@@ -60,6 +75,7 @@ export abstract class AvisosBase implements OnInit, OnDestroy {
   private temporizador?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
+    this.cargarEquipos();
     this.cargarContactos();
     this.consultarEstado();
     this.temporizador = setInterval(() => {
@@ -79,7 +95,7 @@ export abstract class AvisosBase implements OnInit, OnDestroy {
   }
 
   protected notificarTodos(): void {
-    const ids = this.activos().map((c) => c.id);
+    const ids = this.visibles().map((c) => c.id);
     if (ids.length) this.enviar(ids);
   }
 
@@ -122,6 +138,10 @@ export abstract class AvisosBase implements OnInit, OnDestroy {
     return TONOS[index % TONOS.length];
   }
 
+  protected equipoDe(contacto: ContactoAviso): EquipoAviso | undefined {
+    return this.equipos().find((e) => e.id === contacto.equipoId);
+  }
+
   protected estadoDe(contacto: ContactoAviso): UltimoAviso | undefined {
     return this.estados()[contacto.id];
   }
@@ -142,6 +162,13 @@ export abstract class AvisosBase implements OnInit, OnDestroy {
   }
 
   // ---------- Internos ----------
+
+  protected cargarEquipos(): void {
+    this.avisosService.equipos().subscribe({
+      next: (equipos) => this.equipos.set(equipos),
+      error: () => {},
+    });
+  }
 
   protected cargarContactos(): void {
     this.avisosService.contactos().subscribe({

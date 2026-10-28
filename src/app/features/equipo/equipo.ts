@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, signal, viewChild } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ContactoAviso, ContactoForm } from '../../core/services/avisos.service';
+import { ContactoAviso, ContactoForm, EquipoAviso } from '../../core/services/avisos.service';
 import { AvisosBase, mensajeDeError } from '../../shared/avisos/avisos-base';
 
 export const SONIDOS = [
@@ -32,17 +32,41 @@ export class EquipoTrabajo extends AvisosBase {
   protected readonly agregados = signal<string[]>([]);
   private readonly campoNombre = viewChild<ElementRef<HTMLInputElement>>('campoNombre');
 
+  constructor() {
+    super();
+    // Si antes se abrió la tableta, aquí se vuelve a usar la sesión.
+    this.avisosService.usarTableta(false);
+  }
+
   protected readonly tieneOpcionales = computed(() => {
     const f = this.form();
     return !!(f.puesto || f.pushoverDevice || f.sonido);
   });
 
-  protected abrirNuevo(): void {
+  // Personas agrupadas por equipo (en el orden de los equipos); al final las que no tienen.
+  protected readonly grupos = computed(() => {
+    const grupos: { clave: string; equipo: EquipoAviso | null; personas: ContactoAviso[] }[] =
+      this.equipos().map((e) => ({
+        clave: e.slug,
+        equipo: e,
+        personas: this.contactos().filter((c) => c.equipoId === e.id),
+      }));
+    const ids = new Set(this.equipos().map((e) => e.id));
+    const sinEquipo = this.contactos().filter((c) => c.equipoId === null || !ids.has(c.equipoId));
+    if (sinEquipo.length) grupos.push({ clave: 'sin-equipo', equipo: null, personas: sinEquipo });
+    return grupos;
+  });
+
+  protected abrirNuevo(equipoId: number | null = null): void {
     this.editando.set(null);
     this.agregados.set([]);
-    this.limpiarForm();
+    this.limpiarForm(equipoId);
     this.formAbierto.set(true);
     this.enfocarNombre();
+  }
+
+  protected elegirEquipo(id: number): void {
+    this.form.update((f) => ({ ...f, equipoId: id }));
   }
 
   protected abrirEditar(contacto: ContactoAviso): void {
@@ -54,6 +78,7 @@ export class EquipoTrabajo extends AvisosBase {
       pushoverDevice: contacto.pushoverDevice ?? '',
       sonido: contacto.sonido ?? '',
       activo: contacto.activo,
+      equipoId: contacto.equipoId,
     });
     this.formAbierto.set(true);
   }
@@ -78,6 +103,10 @@ export class EquipoTrabajo extends AvisosBase {
       pushoverUser: this.form().pushoverUser.trim(),
     };
     const editando = this.editando();
+    if (!datos.equipoId) {
+      this.toastService.error('Elige de qué equipo es.');
+      return;
+    }
     this.guardando.set(true);
 
     const peticion: Observable<{ ok?: boolean; dispositivos?: string[] }> = editando
@@ -95,7 +124,8 @@ export class EquipoTrabajo extends AvisosBase {
         );
         if (seguir) {
           this.agregados.update((a) => [...a, datos.nombre]);
-          this.limpiarForm();
+          // La siguiente persona suele ser del mismo equipo: se deja elegido.
+          this.limpiarForm(datos.equipoId);
           this.enfocarNombre();
         } else {
           this.formAbierto.set(false);
@@ -126,8 +156,15 @@ export class EquipoTrabajo extends AvisosBase {
     });
   }
 
-  private limpiarForm(): void {
-    this.form.set({ nombre: '', puesto: '', pushoverUser: '', pushoverDevice: '', sonido: '' });
+  private limpiarForm(equipoId: number | null = null): void {
+    this.form.set({
+      nombre: '',
+      puesto: '',
+      pushoverUser: '',
+      pushoverDevice: '',
+      sonido: '',
+      equipoId,
+    });
   }
 
   private enfocarNombre(): void {

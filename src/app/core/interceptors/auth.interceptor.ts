@@ -19,8 +19,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(solicitud).pipe(
     catchError((error: unknown) => {
       const esLogin = req.url === `${environment.apiUrl}/auth/login`;
+      // La tableta no usa sesión: un 401 ahí (llave inválida) no debe mandar al login.
+      const esTableta = req.url.startsWith(`${environment.apiUrl}/tableta/`);
 
-      if (error instanceof HttpErrorResponse && error.status === 401 && !esLogin) {
+      if (error instanceof HttpErrorResponse && error.status === 401 && !esLogin && !esTableta) {
         authService.logout();
         void router.navigate(['/login'], { queryParams: { motivo: 'sesion' } });
       }
