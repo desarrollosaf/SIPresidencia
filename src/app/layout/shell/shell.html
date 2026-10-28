@@ -137,9 +137,25 @@
           />
         </svg>
       </button>
-      <span class="crumb"><b>SIPresidencia</b></span>
+      <span class="crumb">
+        SIPresidencia
+        @if (seccion()) {
+          <span class="crumb-sep">/</span><b>{{ seccion() }}</b>
+        }
+      </span>
       <div class="topbar-actions">
-        <button type="button" class="bell-btn" title="Notificaciones">
+        <a
+          class="bell-btn"
+          routerLink="/llamar"
+          [title]="
+            alertasSonando()
+              ? alertasSonando() + ' alerta(s) sonando — ir a Llamar'
+              : 'Llamar al equipo'
+          "
+        >
+          @if (alertasSonando()) {
+            <span class="punto"></span>
+          }
           <svg viewBox="0 0 24 24" fill="none">
             <path
               d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9Z"
@@ -154,7 +170,7 @@
               stroke-linecap="round"
             />
           </svg>
-        </button>
+        </a>
         <details class="user-menu">
           <summary>
             <div class="avatar">{{ iniciales() }}</div>

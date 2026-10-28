@@ -6,6 +6,13 @@ export const routes: Routes = [
     path: 'login',
     loadChildren: () => import('./features/login/login.routes').then((m) => m.LOGIN_ROUTES),
   },
+  // "Llamar" a pantalla completa para la tableta del titular (sin menú ni barra superior).
+  {
+    path: 'tableta',
+    canActivate: [authGuard],
+    data: { kiosco: true },
+    loadComponent: () => import('./features/llamar/llamar').then((m) => m.Llamar),
+  },
   {
     path: '',
     canActivate: [authGuard],

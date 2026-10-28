@@ -49,7 +49,15 @@
     <div class="stat-card">
       <div class="stat-icono acc1">
         <svg viewBox="0 0 24 24" fill="none">
-          <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+          <rect
+            x="3.5"
+            y="5"
+            width="17"
+            height="15"
+            rx="2.5"
+            stroke="currentColor"
+            stroke-width="1.7"
+          />
           <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.7" />
         </svg>
       </div>
@@ -65,8 +73,18 @@
         <svg viewBox="0 0 24 24" fill="none">
           <circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" />
           <circle cx="16" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.7" />
-          <path d="M3 19c.5-3.3 2.7-5 6-5s5.5 1.7 6 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
-          <path d="M14.5 14.3c2.6.3 4 1.8 4.4 4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path
+            d="M3 19c.5-3.3 2.7-5 6-5s5.5 1.7 6 5"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+          <path
+            d="M14.5 14.3c2.6.3 4 1.8 4.4 4.7"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
         </svg>
       </div>
       <div>
@@ -80,7 +98,12 @@
       <div class="stat-icono brass">
         <svg viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.7" />
-          <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path
+            d="M12 7.5V12l3 2"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
         </svg>
       </div>
       <div>
@@ -93,7 +116,13 @@
     <div class="stat-card">
       <div class="stat-icono acc3">
         <svg viewBox="0 0 24 24" fill="none">
-          <path d="M5 12.5l4.5 4.5L19 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <path
+            d="M5 12.5l4.5 4.5L19 7.5"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </div>
       <div>
@@ -108,12 +137,14 @@
     <div class="card timeline-card">
       <div class="card-h">
         <h3>Ocupación de salones · {{ etiquetaFechaFoco() }}</h3>
-        <button type="button" class="sub link-boton" (click)="verSemanaCompleta()">Ver semana completa</button>
+        <button type="button" class="sub link-boton" (click)="verSemanaCompleta()">
+          Ver semana completa
+        </button>
       </div>
 
       <div class="timeline">
         <div class="timeline-scale">
-          <div class="timeline-scale-label" style="width: 168px"></div>
+          <div class="timeline-scale-label" style="width: 190px"></div>
           <div class="timeline-scale-horas">
             @for (h of horasEscala; track h; let i = $index) {
               <span [style.left.%]="(i / (horasEscala.length - 1)) * 100">{{ h }}</span>
@@ -123,9 +154,9 @@
 
         @for (salon of salonesFiltrados(); track salon.id) {
           <div class="timeline-row">
-            <div class="timeline-row-label">
+            <div class="timeline-row-label" [title]="salon.nombre">
               <span class="dot" [style.background]="salon.color"></span>
-              {{ salon.nombre }}
+              <span class="timeline-row-nombre">{{ salon.nombre }}</span>
             </div>
             <div class="timeline-row-track">
               @for (evento of eventosDelDia(salon); track evento.id) {
@@ -133,13 +164,17 @@
                 <button
                   type="button"
                   class="timeline-bar"
+                  [title]="evento.titulo + ' · ' + rangoHora(evento)"
                   [class.activa]="eventoSeleccionado()?.evento?.id === evento.id"
                   [style.left.%]="pos.left"
                   [style.width.%]="pos.width"
                   [style.background]="salon.color"
                   (click)="seleccionarEvento(evento, salon)"
                 >
-                  {{ evento.titulo }} · {{ evento.horaInicio }}@if (evento.horaFin) { – {{ evento.horaFin }} }
+                  {{ evento.titulo }} · {{ evento.horaInicio }}
+                  @if (evento.horaFin) {
+                    – {{ evento.horaFin }}
+                  }
                 </button>
               }
               @if (posicionAhora(); as ahoraPct) {
@@ -152,7 +187,10 @@
         }
       </div>
 
-      <p class="timeline-nota">Los horarios están en hora del centro de México (GMT-6). Toca un evento en la línea de tiempo para ver su descripción completa.</p>
+      <p class="timeline-nota">
+        Los horarios están en hora del centro de México (GMT-6). Toca un evento en la línea de
+        tiempo para ver su descripción completa.
+      </p>
     </div>
   } @else {
     <div class="card">
@@ -183,9 +221,19 @@
   <div class="modal-backdrop" (click)="cerrarEventoSeleccionado()">
     <div class="modal-evento" (click)="$event.stopPropagation()">
       <div class="modal-evento-barra" [style.background]="sel.salonColor"></div>
-      <button type="button" class="modal-evento-cerrar" (click)="cerrarEventoSeleccionado()" aria-label="Cerrar">
+      <button
+        type="button"
+        class="modal-evento-cerrar"
+        (click)="cerrarEventoSeleccionado()"
+        aria-label="Cerrar"
+      >
         <svg viewBox="0 0 24 24" fill="none">
-          <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          <path
+            d="M6 6l12 12M18 6 6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
       <div class="modal-evento-cuerpo">
@@ -201,7 +249,12 @@
           <span>
             <svg viewBox="0 0 24 24" fill="none">
               <circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.7" />
-              <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+              <path
+                d="M12 7.5V12l3 2"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
             </svg>
             {{ rangoHora(sel.evento) }} h
           </span>

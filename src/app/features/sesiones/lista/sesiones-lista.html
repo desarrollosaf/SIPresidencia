@@ -20,9 +20,22 @@
         (click)="alternarCalendario()"
       >
         <svg viewBox="0 0 24 24" fill="none">
-          <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.7" />
+          <rect
+            x="3.5"
+            y="5"
+            width="17"
+            height="15"
+            rx="2.5"
+            stroke="currentColor"
+            stroke-width="1.7"
+          />
           <path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.7" />
-          <path d="M8 3v3.2M16 3v3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          <path
+            d="M8 3v3.2M16 3v3.2"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
         </svg>
         <span [class.placeholder]="!fechaSeleccionada()">{{ etiquetaFechaSeleccionada() }}</span>
       </button>
@@ -100,7 +113,16 @@
 @if (cargando()) {
   <p class="empty">Cargando…</p>
 } @else if (eventos().length === 0) {
-  <p class="empty">No hay eventos para mostrar.</p>
+  <div class="estado-vacio">
+    <div class="estado-vacio-icono">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.7" />
+        <path d="M10 9.5v5l4.5-2.5-4.5-2.5Z" fill="currentColor" />
+      </svg>
+    </div>
+    <h3>No hay sesiones para mostrar</h3>
+    <p>Elige otra fecha o consulta los últimos eventos del Pleno.</p>
+  </div>
 } @else {
   <div class="sesiones-lista">
     @for (evento of eventos(); track evento.id) {

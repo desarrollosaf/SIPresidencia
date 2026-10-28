@@ -1,10 +1,59 @@
-<div class="llamar">
+<div class="llamar" [class.kiosco]="kiosco">
+  @if (kiosco) {
+    <div class="kiosco-barra">
+      <div class="kiosco-marca">
+        <div class="seal">SP</div>
+        <span>Presidencia</span>
+      </div>
+      <div class="kiosco-opciones">
+        @if (pantallaCompletaDisponible) {
+          <button
+            type="button"
+            class="kiosco-icono"
+            title="Pantalla completa"
+            (click)="alternarPantallaCompleta()"
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        }
+        <a class="kiosco-icono" routerLink="/llamar" title="Salir del modo tableta">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path
+              d="M6 6l12 12M18 6 6 18"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </a>
+      </div>
+    </div>
+  }
+
   <header class="llamar-head">
     <div>
-      <h1>Llamar</h1>
-      <p>Toca a una persona y su teléfono sonará hasta que lo vea.</p>
+      @if (kiosco) {
+        <h1>{{ saludo }}</h1>
+        <p>¿A quién necesitas? Toca su nombre y su teléfono sonará hasta que lo vea.</p>
+      } @else {
+        <h1>Llamar</h1>
+        <p>Toca a una persona y su teléfono sonará hasta que lo vea.</p>
+      }
     </div>
     <div class="llamar-acciones">
+      @if (!kiosco) {
+        <a class="llamar-boton" routerLink="/tableta" title="Pantalla completa para la tableta">
+          Modo tableta
+        </a>
+      }
       @if (totales().sonando > 0) {
         <button type="button" class="llamar-boton" (click)="detener()">Detener todas</button>
       }
@@ -94,10 +143,32 @@
           }
         </div>
       } @empty {
-        <p class="empty llamar-vacio">
-          Aún no hay personas. Agrégalas desde <b>Equipo de trabajo</b>.
-        </p>
+        <div class="estado-vacio llamar-vacio">
+          <div class="estado-vacio-icono">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.7" />
+              <path
+                d="M3 19c.6-3.4 2.9-5.2 6-5.2s5.4 1.8 6 5.2"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+              <path
+                d="M18 8v6M15 11h6"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+          <h3>Aún no hay nadie en el equipo</h3>
+          <p>Agrega a las personas desde <b>Equipo de trabajo</b> y aparecerán aquí.</p>
+        </div>
       }
     </div>
   }
 </div>
+
+@if (kiosco) {
+  <app-toast-container></app-toast-container>
+}
