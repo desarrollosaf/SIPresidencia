@@ -25,6 +25,9 @@ const CONSULTA_RECIBO_MS = 5000;
 // el reintento mínimo (30 s), así que suena una sola vez y no hay que confirmarla.
 const REINTENTO_S = 30;
 const EXPIRA_S = 20;
+// La tarjeta deja de decir "Sonando" este tiempo después de la última alerta, sin esperar a
+// que Pushover marque el recibo como vencido (tarda o no lo hace).
+const SONANDO_MS = 10_000;
 
 export type EstadoAviso =
   'sonando' | 'visto' | 'expirado' | 'cancelado' | 'error';
@@ -226,6 +229,16 @@ export class AvisosService implements OnModuleDestroy {
   async estado() {
     const token = this.config.get<string>('pushover.token');
     const ahora = Date.now();
+    const repetirMs =
+      (this.config.get<number>('pushover.repetirSegundos') ?? 3) * 1000;
+    for (const [id, u] of this.ultimos) {
+      if (
+        u.estado === 'sonando' &&
+        !this.segundas.has(id) &&
+        ahora - u.enviadoEn >= repetirMs + SONANDO_MS
+      )
+        u.estado = 'expirado';
+    }
     await Promise.all(
       [...this.ultimos.entries()]
         .filter(
