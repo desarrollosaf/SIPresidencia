@@ -147,7 +147,7 @@
             <button
               type="button"
               class="llamar-tap"
-              [disabled]="estaEnviando(c) || est?.estado === 'sonando'"
+              [disabled]="estaEnviando(c)"
               [attr.aria-label]="'Llamar a ' + c.nombre"
               (click)="notificar(c)"
             >

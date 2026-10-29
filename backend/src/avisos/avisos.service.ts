@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   HttpException,
-  HttpStatus,
   Injectable,
   Logger,
   NotFoundException,
@@ -192,28 +191,12 @@ export class AvisosService implements OnModuleDestroy {
     if (!contactos.length)
       throw new NotFoundException('No se encontró a ninguna persona activa.');
 
-    const espera =
-      (this.config.get<number>('pushover.esperaSegundos') ?? 30) * 1000;
-    const ahora = Date.now();
-    const listos = contactos.filter(
-      (c) => ahora - (this.ultimos.get(c.id)?.enviadoEn ?? 0) >= espera,
-    );
-    if (!listos.length) {
-      throw new HttpException(
-        {
-          statusCode: HttpStatus.TOO_MANY_REQUESTS,
-          message: 'Ya se avisó hace un momento. Espera unos segundos.',
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
     const texto = mensaje?.trim() || 'Te necesitan, por favor acude.';
     const repetirMs =
-      (this.config.get<number>('pushover.repetirSegundos') ?? 5) * 1000;
+      (this.config.get<number>('pushover.repetirSegundos') ?? 3) * 1000;
 
     return Promise.all(
-      listos.map(async (c): Promise<ResultadoAviso> => {
+      contactos.map(async (c): Promise<ResultadoAviso> => {
         try {
           const receipt = await this.alertar(c, texto, remitente);
           this.cancelarSegunda(c.id);

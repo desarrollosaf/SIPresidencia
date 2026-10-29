@@ -10,9 +10,7 @@ export default registerAs('pushover', () => ({
   // Sonido por omisión si la persona no tiene uno propio (vibrate = solo vibra).
   sonido: process.env.PUSHOVER_SONIDO ?? 'persistent',
   // Segundos entre la primera y la segunda alerta (0 = solo una).
-  repetirSegundos: parseInt(process.env.PUSHOVER_REPETIR_SEGUNDOS ?? '5', 10),
-  // Mínimo de segundos entre dos avisos a la misma persona.
-  esperaSegundos: parseInt(process.env.PUSHOVER_ESPERA_SEGUNDOS ?? '30', 10),
+  repetirSegundos: parseInt(process.env.PUSHOVER_REPETIR_SEGUNDOS ?? '3', 10),
   timeoutMs: parseInt(process.env.PUSHOVER_TIMEOUT_MS ?? '8000', 10),
   // /tableta abre "Llamar" sin iniciar sesión. Vacía = abierta; con valor exige /tableta?llave=….
   tabletaLlave: process.env.TABLETA_LLAVE ?? '',
